@@ -35,4 +35,10 @@ describe('generateRecurring', () => {
     const r = generateRecurring([tpl({ startDate: '2026-09-01' })], { u1: card({ periodType: 'statement', defaultCycleDay: 15 }) }, '2026-09-24');
     expect(r.transactions.map((t) => t.date)).toEqual(['2026-09-01', '2026-09-15']);
   });
+  it('copies the overseas flag into generated transactions, omitting it when false', () => {
+    const [os] = generateRecurring([tpl({ overseas: true, startDate: '2026-09-01' })], cards, '2026-09-24').transactions;
+    expect(os.overseas).toBe(true);
+    const [dom] = generateRecurring([tpl({ startDate: '2026-09-01' })], cards, '2026-09-24').transactions;
+    expect('overseas' in dom).toBe(false);
+  });
 });

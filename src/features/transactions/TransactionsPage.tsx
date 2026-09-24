@@ -36,6 +36,7 @@ export function TransactionsPage() {
         active: true,
         startDate: tx.date,
         lastGeneratedPeriodStart: getPeriod(resolved[tx.userCardId], tx.date).start,
+        ...(tx.overseas ? { overseas: true } : {}),
       };
       await repo.saveTemplate(tpl);
       toSave = { ...tx, recurringId: tpl.id };

@@ -86,6 +86,7 @@ export interface RecurringTemplate {
   active: boolean;
   startDate: string;
   lastGeneratedPeriodStart?: string;
+  overseas?: boolean; // copied into generated transactions
 }
 
 export interface Settings {

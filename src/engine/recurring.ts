@@ -28,6 +28,7 @@ export function generateRecurring(
         paymentMethod: t.paymentMethod,
         recurringId: t.id,
         createdAt: `${date}T00:00:00.000Z`,
+        ...(t.overseas ? { overseas: true } : {}),
       });
       last = p.start;
       p = nextPeriod(card, p);

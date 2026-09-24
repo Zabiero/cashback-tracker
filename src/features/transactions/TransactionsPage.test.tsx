@@ -37,6 +37,17 @@ describe('TransactionsPage', () => {
     expect((await repo.listTransactions())[0].recurringId).toBe(tpl.id);
   });
 
+  it('copies the overseas flag into a recurring template', async () => {
+    const { repo } = await renderWithData(<TransactionsPage />, { seed });
+    await userEvent.type(screen.getByLabelText('Amount (RM)'), '50');
+    await userEvent.click(screen.getByLabelText('Overseas (foreign currency)'));
+    await userEvent.click(screen.getByLabelText('Repeat every period'));
+    await userEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
+    await screen.findByRole('region', { name: 'Recurring transactions' });
+    const [tpl] = await repo.listTemplates();
+    expect(tpl).toMatchObject({ amount: 50, overseas: true });
+  });
+
   it('remembers the category for a known merchant', async () => {
     await renderWithData(<TransactionsPage />, {
       seed: async (repo) => {
