@@ -72,4 +72,29 @@ describe('WhichCardPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Logged RM100.00 to Card A');
     expect(await repo.listTransactions()).toEqual([expect.objectContaining({ userCardId: 'A', amount: 100, overseas: true })]);
   });
+  it('logs exactly one transaction when Log it is double-clicked', async () => {
+    const { repo } = await setup();
+    // Hold the first save open so the second click lands while it is still pending.
+    const realSave = repo.saveTransaction.bind(repo);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    vi.spyOn(repo, 'saveTransaction').mockImplementation(async (t) => {
+      await gate;
+      return realSave(t);
+    });
+    await userEvent.type(screen.getByLabelText('Amount (RM)'), '100');
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Log it to Card B' }));
+    release();
+    expect(await screen.findByRole('status')).toHaveTextContent('Logged RM100.00 to Card B');
+    expect(await repo.listTransactions()).toHaveLength(1);
+  });
+
+  it('shows an error when logging fails', async () => {
+    const { repo } = await setup();
+    vi.spyOn(repo, 'saveTransaction').mockRejectedValueOnce(new Error('disk full'));
+    await userEvent.type(screen.getByLabelText('Amount (RM)'), '100');
+    await userEvent.click(screen.getByRole('button', { name: 'Log it to Card B' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save the transaction: disk full');
+    expect(screen.getByRole('button', { name: 'Log it to Card B' })).toBeEnabled();
+  });
 });

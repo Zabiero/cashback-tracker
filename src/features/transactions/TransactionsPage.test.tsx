@@ -89,4 +89,13 @@ describe('TransactionsPage', () => {
     await screen.findByText('RM50.00');
     expect((await repo.listTransactions())[0].overseas).toBeUndefined();
   });
+  it('shows an error and keeps the form when saving fails', async () => {
+    const { repo } = await renderWithData(<TransactionsPage />, { seed });
+    vi.spyOn(repo, 'saveTransaction').mockRejectedValueOnce(new Error('disk full'));
+    await userEvent.type(screen.getByLabelText('Amount (RM)'), '42');
+    await userEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save the transaction: disk full');
+    expect(screen.getByLabelText('Amount (RM)')).toHaveValue('42');
+    expect(screen.getByRole('button', { name: 'Save transaction' })).toBeEnabled();
+  });
 });

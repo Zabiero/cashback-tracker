@@ -73,4 +73,29 @@ describe('SettingsPage', () => {
     expect(await screen.findByText('Point values saved.')).toBeInTheDocument();
     expect((await repo.getSettings()).pointValueOverrides[hybridProduct.id]).toBe(0.004);
   });
+  it('rejects a point value that is not a positive number and saves nothing', async () => {
+    const pointsProduct = CATALOG.find((p) => p.rewardType === 'points')!;
+    const { repo } = await renderWithData(<SettingsPage />, {
+      seed: (r) => r.saveUserCard({ id: 'p1', productId: pointsProduct.id, nickname: '', catalogVersionSeen: pointsProduct.catalogVersion, archived: false }),
+    });
+    const input = screen.getByLabelText(/RM value of 1,000 points/);
+    for (const bad of ['abc', '0', '-2']) {
+      await userEvent.clear(input);
+      await userEvent.type(input, bad);
+      await userEvent.click(screen.getByRole('button', { name: 'Save point values' }));
+      expect(screen.getByRole('alert')).toHaveTextContent('Enter a positive number of RM per 1,000 points.');
+    }
+    expect((await repo.getSettings()).pointValueOverrides).toEqual({});
+    expect(screen.queryByText('Point values saved.')).not.toBeInTheDocument();
+  });
+
+  it('shows an error when the import cannot be saved', async () => {
+    const { repo } = await renderWithData(<SettingsPage />);
+    vi.spyOn(repo, 'replaceAll').mockRejectedValueOnce(new Error('quota exceeded'));
+    const backup = makeBackup({ userCards: [], transactions: [], templates: [], settings: DEFAULT_SETTINGS }, '2026-09-24T00:00:00Z');
+    await userEvent.upload(screen.getByLabelText('Import backup file'), new File([JSON.stringify(backup)], 'b.json', { type: 'application/json' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Replace my data' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not import the backup: quota exceeded');
+    expect(screen.getByRole('button', { name: 'Replace my data' })).toBeEnabled();
+  });
 });

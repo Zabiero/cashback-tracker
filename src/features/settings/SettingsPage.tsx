@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { useAppData } from '../../app/DataProvider';
 import { activeCards } from '../../app/selectors';
 import { makeBackup, parseBackup, type BackupSummary } from '../../data/backup';
@@ -27,6 +27,9 @@ export function SettingsPage() {
   const [pending, setPending] = useState<{ data: AppSnapshot; summary: BackupSummary } | null>(null);
   const [importError, setImportError] = useState('');
   const [message, setMessage] = useState('');
+  const [importing, setImporting] = useState(false);
+  const importingRef = useRef(false); // blocks a second click before the disabled state renders
+  const [pointError, setPointError] = useState('');
 
   // Every owned (active, catalog) card whose product earns points anywhere, deduped by product.
   const pointProducts = [...new Map<string, PointProduct>(
@@ -63,11 +66,21 @@ export function SettingsPage() {
   }
 
   async function confirmImport() {
-    if (!pending) return;
-    await repo.replaceAll(pending.data);
-    setPending(null);
-    await refresh();
-    setMessage('Backup imported.');
+    if (!pending || importingRef.current) return;
+    importingRef.current = true;
+    setImporting(true);
+    setImportError('');
+    try {
+      await repo.replaceAll(pending.data);
+      setPending(null);
+      await refresh();
+      setMessage('Backup imported.');
+    } catch (e) {
+      setImportError(`Could not import the backup: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      importingRef.current = false;
+      setImporting(false);
+    }
   }
 
   async function savePointValues() {
@@ -76,7 +89,13 @@ export function SettingsPage() {
       const n = Number(v);
       if (v.trim() === '') delete next[pid];
       else if (Number.isFinite(n) && n > 0) next[pid] = n / 1000;
+      else {
+        setMessage('');
+        setPointError('Enter a positive number of RM per 1,000 points.');
+        return;
+      }
     }
+    setPointError('');
     await repo.saveSettings({ ...settings, pointValueOverrides: next });
     await refresh();
     setMessage('Point values saved.');
@@ -105,7 +124,7 @@ export function SettingsPage() {
               {s.cards} card{s.cards === 1 ? '' : 's'}, {s.transactions} transaction{s.transactions === 1 ? '' : 's'}
               {s.from ? ` (${s.from} to ${s.to})` : ''}. This replaces all current data.
             </p>
-            <button type="button" onClick={confirmImport}>Replace my data</button>{' '}
+            <button type="button" onClick={confirmImport} disabled={importing}>Replace my data</button>{' '}
             <button type="button" onClick={() => setPending(null)}>Cancel</button>
           </div>
         )}
@@ -127,6 +146,7 @@ export function SettingsPage() {
               </label>
             );
           })}
+          {pointError && <p className="error" role="alert">{pointError}</p>}
           <div>
             <button type="button" onClick={savePointValues}>Save point values</button>
           </div>

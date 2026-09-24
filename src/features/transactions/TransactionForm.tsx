@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type { Transaction } from '../../engine/types';
 import type { ActiveCard } from '../../app/selectors';
@@ -33,6 +33,8 @@ export function TransactionForm({ cards, transactions, today, initial, onSubmit,
   const [note, setNote] = useState(initial?.note ?? '');
   const [recurring, setRecurring] = useState(false);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false); // blocks a second submit before the disabled state renders
   const merchants = useMemo(() => knownMerchants(transactions), [transactions]);
 
   if (!cards.length) {
@@ -45,27 +47,38 @@ export function TransactionForm({ cards, transactions, today, initial, onSubmit,
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (savingRef.current) return;
     const amount = parseMoney(draft.amount);
     if (!cardId) return setError('Choose a card.');
     if (amount === null || amount === 0) return setError('Enter an amount like 12.50 (use a minus sign for refunds).');
     if (!draft.date) return setError('Choose a date.');
     setError('');
-    await onSubmit(
-      {
-        id: initial?.id ?? newId(),
-        userCardId: cardId,
-        date: draft.date,
-        amount,
-        category: draft.category,
-        merchant: draft.merchant.trim() || undefined,
-        paymentMethod: draft.paymentMethod,
-        note: note.trim() || undefined,
-        recurringId: initial?.recurringId,
-        createdAt: initial?.createdAt ?? new Date().toISOString(),
-        overseas: draft.overseas ? true : undefined,
-      },
-      recurring,
-    );
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await onSubmit(
+        {
+          id: initial?.id ?? newId(),
+          userCardId: cardId,
+          date: draft.date,
+          amount,
+          category: draft.category,
+          merchant: draft.merchant.trim() || undefined,
+          paymentMethod: draft.paymentMethod,
+          note: note.trim() || undefined,
+          recurringId: initial?.recurringId,
+          createdAt: initial?.createdAt ?? new Date().toISOString(),
+          overseas: draft.overseas ? true : undefined,
+        },
+        recurring,
+      );
+    } catch (err) {
+      setError(`Could not save the transaction: ${err instanceof Error ? err.message : String(err)}`);
+      return;
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
     if (!initial) {
       setDraft((d) => ({ ...emptyDraft(today), date: d.date, paymentMethod: d.paymentMethod }));
       setNote('');
@@ -102,7 +115,7 @@ export function TransactionForm({ cards, transactions, today, initial, onSubmit,
         </p>
       )}
       <div>
-        <button type="submit" className="primary">
+        <button type="submit" className="primary" disabled={saving}>
           Save transaction
         </button>{' '}
         {onCancel && (

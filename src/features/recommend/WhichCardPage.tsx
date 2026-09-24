@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppData } from '../../app/DataProvider';
 import { cardInputs, nameOf } from '../../app/selectors';
@@ -13,6 +13,9 @@ export function WhichCardPage() {
   const { repo, transactions, refresh, today } = data;
   const [draft, setDraft] = useState<PurchaseDraft>(() => emptyDraft(today));
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false); // blocks a second click before the disabled state renders
   const amount = parseMoney(draft.amount);
   const merchants = useMemo(() => knownMerchants(transactions), [transactions]);
   const inputs = useMemo(() => cardInputs(data), [data]);
@@ -33,22 +36,32 @@ export function WhichCardPage() {
   );
 
   async function log(r: Recommendation) {
-    if (amount === null) return;
+    if (amount === null || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError('');
     const name = nameOf(data, r.userCardId);
-    await repo.saveTransaction({
-      id: newId(),
-      userCardId: r.userCardId,
-      date: draft.date,
-      amount,
-      category: draft.category,
-      merchant: draft.merchant.trim() || undefined,
-      paymentMethod: draft.paymentMethod,
-      createdAt: new Date().toISOString(),
-      overseas: draft.overseas || undefined,
-    });
-    setMessage(`Logged ${formatRM(amount)} to ${name}`);
-    setDraft((d) => ({ ...d, amount: '', merchant: '' }));
-    await refresh();
+    try {
+      await repo.saveTransaction({
+        id: newId(),
+        userCardId: r.userCardId,
+        date: draft.date,
+        amount,
+        category: draft.category,
+        merchant: draft.merchant.trim() || undefined,
+        paymentMethod: draft.paymentMethod,
+        createdAt: new Date().toISOString(),
+        overseas: draft.overseas || undefined,
+      });
+      setMessage(`Logged ${formatRM(amount)} to ${name}`);
+      setDraft((d) => ({ ...d, amount: '', merchant: '' }));
+      await refresh();
+    } catch (e) {
+      setError(`Could not save the transaction: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }
 
   if (!inputs.length) {
@@ -69,6 +82,11 @@ export function WhichCardPage() {
         <PurchaseFields value={draft} onChange={setDraft} merchants={merchants} categoryFor={(m) => lastCategoryFor(m, transactions)} />
       </section>
       {message && <p role="status">{message}</p>}
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
       {amount === null || amount <= 0 ? (
         <p className="muted">Enter an amount to compare your cards.</p>
       ) : (
@@ -83,7 +101,7 @@ export function WhichCardPage() {
                 <span>{formatRM(r.incrementalRM)}</span>
               </div>
               <div className="muted">{r.reason}</div>
-              <button type="button" onClick={() => log(r)} aria-label={`Log it to ${nameOf(data, r.userCardId)}`}>
+              <button type="button" onClick={() => log(r)} disabled={saving} aria-label={`Log it to ${nameOf(data, r.userCardId)}`}>
                 Log it
               </button>
             </li>
