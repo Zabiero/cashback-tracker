@@ -1,5 +1,5 @@
 import type { CardProduct, Category, PaymentMethod, Transaction, UserCard } from './types';
-import { calculateEarnings, round2 } from './earnings';
+import { calculateEarnings, capKeysFor, round2 } from './earnings';
 import { getPeriod } from './periods';
 import { selectRule } from './rules';
 import { formatRate } from './format';
@@ -50,7 +50,7 @@ export function recommend(inputs: CardInput[], purchase: Purchase): Recommendati
       } else if (incrementalRM === 0) {
         reason = `Cap reached — earns ${formatRM(0)}`;
       } else {
-        const keys = [`rule:${sel.rule.id}`, ...(sel.rule.capGroup ? [`group:${sel.rule.capGroup}`] : []), 'total'];
+        const keys = capKeysFor(sel.rule);
         const relevant = after.caps.filter((c) => keys.includes(c.key));
         const left = relevant.length ? Math.min(...relevant.map((c) => c.limitRM - c.usedRM)) : null;
         reason = `${formatRate(sel.rate, card.rewardType)} ${sel.rule.label}${left != null ? ` — ${formatRM(round2(left))} cap left` : ''}`;

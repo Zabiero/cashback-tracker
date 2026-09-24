@@ -1,4 +1,4 @@
-import { calculateEarnings } from './earnings';
+import { calculateEarnings, capKeysFor } from './earnings';
 import { card, SEP, tx } from '../test/fixtures';
 
 const at5 = card({ rules: [{ id: 'all', label: 'All spend', rate: 0.05 }] });
@@ -107,5 +107,12 @@ describe('calculateEarnings', () => {
     const e = calculateEarnings(c, [later, earlier], SEP);
     expect(e.perTransaction.find((p) => p.transactionId === 'earlier')!.earnedRM).toBe(5);
     expect(e.perTransaction.find((p) => p.transactionId === 'later')!.earnedRM).toBe(0);
+  });
+});
+
+describe('capKeysFor', () => {
+  it('derives rule, capGroup, and total keys', () => {
+    expect(capKeysFor({ id: 'all', label: 'All', rate: 0.05 })).toEqual(['rule:all', 'total']);
+    expect(capKeysFor({ id: 'dine', label: 'Dining', rate: 0.05, capGroup: 'g' })).toEqual(['rule:dine', 'group:g', 'total']);
   });
 });

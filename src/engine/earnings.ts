@@ -1,6 +1,10 @@
-import type { CardProduct, Transaction } from './types';
+import type { CardProduct, Rule, Transaction } from './types';
 import { inPeriod, type Period } from './periods';
 import { nextTierFor, selectRule } from './rules';
+
+export function capKeysFor(rule: Rule): string[] {
+  return [`rule:${rule.id}`, ...(rule.capGroup ? [`group:${rule.capGroup}`] : []), 'total'];
+}
 
 export interface CapStatus {
   key: string;
@@ -57,9 +61,7 @@ export function calculateEarnings(card: CardProduct, transactions: Transaction[]
       perTransaction.push({ transactionId: t.id, ruleId: sel?.rule.id ?? null, earnedRM: 0, cappedRM: 0 });
       continue;
     }
-    const keys = [`rule:${sel.rule.id}`, ...(sel.rule.capGroup ? [`group:${sel.rule.capGroup}`] : []), 'total'].filter((k) =>
-      limitOf.has(k),
-    );
+    const keys = capKeysFor(sel.rule).filter((k) => limitOf.has(k));
     const raw = t.amount * sel.rate;
     let units: number;
     if (raw >= 0) {
