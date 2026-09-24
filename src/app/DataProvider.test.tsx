@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
+import { vi } from 'vitest';
 import { useAppData } from './DataProvider';
 import { renderWithData, seedCard } from '../test/renderWithData';
 
@@ -24,5 +25,16 @@ describe('DataProvider', () => {
     expect(screen.getByText('resolved: good')).toBeInTheDocument();
     expect(screen.getByText(/bad=At least one rule is required/)).toBeInTheDocument();
     expect(screen.getByText(/gone=This card is no longer in the catalog/)).toBeInTheDocument();
+  });
+
+  it('surfaces errors from a focus-triggered refresh', async () => {
+    const { repo } = await renderWithData(<Probe />);
+    vi.spyOn(repo, 'listUserCards').mockRejectedValue(new Error('disk gone'));
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load your data: disk gone');
   });
 });

@@ -64,7 +64,11 @@ export function DataProvider({ repo, today = todayISO, children }: { repo: Repos
       }
     })();
     const onFocus = () => {
-      void runRecurring(repo, today()).then(refresh);
+      void runRecurring(repo, today())
+        .then(refresh)
+        .catch((e) => {
+          if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e));
+        });
     };
     window.addEventListener('focus', onFocus);
     return () => {
