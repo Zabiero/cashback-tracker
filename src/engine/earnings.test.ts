@@ -191,6 +191,49 @@ describe('calculateEarnings', () => {
     expect(e.nextTier).toEqual({ ruleId: 'dine', spendNeeded: 300, nextRate: 0.1 });
   });
 
+  it('does not fill a rule cap with reward the total cap then cuts (fix round 1 regression)', () => {
+    const c = card({
+      totalCapPerPeriod: 30,
+      rules: [
+        { id: 'a', label: 'Dining', rate: 0.05, categories: ['dining'], capPerPeriod: 20 },
+        { id: 'b', label: 'Petrol', rate: 0.05, categories: ['petrol'] },
+      ],
+    });
+    const e = calculateEarnings(
+      c,
+      [
+        tx({ amount: 400, category: 'petrol', date: '2026-09-01' }),
+        tx({ amount: 400, category: 'dining', date: '2026-09-02' }),
+        tx({ amount: -400, category: 'petrol', date: '2026-09-03' }),
+        tx({ amount: 400, category: 'dining', date: '2026-09-04' }),
+      ],
+      SEP,
+    );
+    expect(e.totalEarnedRM).toBe(20);
+    expect(e.caps).toContainEqual({ key: 'rule:a', label: 'Dining', usedRM: 20, limitRM: 20 });
+  });
+
+  it('same scenario without the refund: rule cap usage reflects what was actually paid, not what the total cap trimmed', () => {
+    const c = card({
+      totalCapPerPeriod: 30,
+      rules: [
+        { id: 'a', label: 'Dining', rate: 0.05, categories: ['dining'], capPerPeriod: 20 },
+        { id: 'b', label: 'Petrol', rate: 0.05, categories: ['petrol'] },
+      ],
+    });
+    const e = calculateEarnings(
+      c,
+      [
+        tx({ amount: 400, category: 'petrol', date: '2026-09-01' }),
+        tx({ amount: 400, category: 'dining', date: '2026-09-02' }),
+        tx({ amount: 400, category: 'dining', date: '2026-09-03' }),
+      ],
+      SEP,
+    );
+    expect(e.totalEarnedRM).toBe(30);
+    expect(e.caps).toContainEqual({ key: 'rule:a', label: 'Dining', usedRM: 10, limitRM: 20 });
+  });
+
   it('excludes tierExcludedCategories from the minimum-spend lock', () => {
     const c = card({
       minMonthlySpendToEarn: 500,

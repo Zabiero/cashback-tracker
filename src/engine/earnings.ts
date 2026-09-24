@@ -97,7 +97,8 @@ export function calculateEarnings(card: CardProduct, transactions: Transaction[]
       let combined = allowed + overflow;
       if (hasTotal) combined = Math.max(0, Math.min(combined, limitOf.get('total')! - (used.get('total') ?? 0)));
       final = combined;
-      for (const k of ruleGroupKeys) used.set(k, (used.get(k) ?? 0) + allowed);
+      const ruleGroupUsed = Math.min(allowed, final); // never fill a rule/group cap with reward the total cap then cut
+      for (const k of ruleGroupKeys) used.set(k, (used.get(k) ?? 0) + ruleGroupUsed);
       if (hasTotal) used.set('total', (used.get('total') ?? 0) + final);
     } else {
       const alreadyEarned = earnedByRule.get(sel.rule.id) ?? 0;
