@@ -1,0 +1,368 @@
+[
+  {
+    "id": "maybank-islamic-ikhwan-amex-platinum",
+    "bank": "Maybank Islamic",
+    "name": "Ikhwan American Express Platinum Card-i",
+    "rewardType": "cashback",
+    "periodType": "calendar",
+    "capGroups": { "online-8pct": 50 },
+    "rules": [
+      {
+        "id": "online-category",
+        "label": "8% cashback on online retail spend (cap RM50/month; RM100/month in Ramadhan and Syawal, override the cap in those months)",
+        "rate": 0.08,
+        "categories": ["online"],
+        "capGroup": "online-8pct"
+      },
+      {
+        "id": "online-payment",
+        "label": "8% cashback on retail purchases paid online (excl. utilities, e-wallet reloads; shares the RM50/month cap; RM100 in Ramadhan and Syawal)",
+        "rate": 0.08,
+        "categories": ["petrol", "groceries", "dining", "travel", "insurance", "others"],
+        "paymentMethods": ["online"],
+        "capGroup": "online-8pct"
+      },
+      {
+        "id": "treats-2x",
+        "label": "2x TreatsPoints on other retail spend",
+        "rate": 2,
+        "pointValueRM": 0.002,
+        "categories": ["groceries", "dining", "online", "travel", "others"]
+      },
+      {
+        "id": "treats-1x",
+        "label": "1x TreatsPoints on petrol, utilities and takaful",
+        "rate": 1,
+        "pointValueRM": 0.002,
+        "categories": ["petrol", "utilities", "insurance"]
+      }
+    ],
+    "sourceUrl": "https://www.maybank2u.com.my/iwov-resources/pdf/personal/cards/credit_cards/tc-amex-ikhwan-cashback.pdf",
+    "verifiedOn": null,
+    "catalogVersion": 1
+  },
+  {
+    "id": "rhb-shell-visa",
+    "bank": "RHB",
+    "name": "Shell Visa Credit Card",
+    "rewardType": "cashback",
+    "periodType": "statement",
+    "defaultCycleDay": 1,
+    "minMonthlySpendToEarn": 1000,
+    "rules": [
+      {
+        "id": "shell",
+        "label": "Shell petrol",
+        "rate": 0,
+        "categories": ["petrol"],
+        "merchants": ["shell"],
+        "tiers": [{ "minPeriodSpend": 1000, "rate": 0.03 }, { "minPeriodSpend": 2000, "rate": 0.05 }, { "minPeriodSpend": 3000, "rate": 0.12 }],
+        "capPerPeriod": 30
+      },
+      {
+        "id": "groceries",
+        "label": "Groceries (min RM250 grocery spend per cycle)",
+        "rate": 0,
+        "categories": ["groceries"],
+        "overseas": false,
+        "minCategorySpend": 250,
+        "tiers": [{ "minPeriodSpend": 1000, "rate": 0.01 }, { "minPeriodSpend": 2000, "rate": 0.02 }, { "minPeriodSpend": 3000, "rate": 0.05 }],
+        "capPerPeriod": 10
+      },
+      {
+        "id": "ewallet-online",
+        "label": "e-Wallet top-up and online (min RM500 per cycle)",
+        "rate": 0,
+        "categories": ["ewallet", "online"],
+        "overseas": false,
+        "minCategorySpend": 500,
+        "tiers": [{ "minPeriodSpend": 1000, "rate": 0.01 }, { "minPeriodSpend": 2000, "rate": 0.02 }, { "minPeriodSpend": 3000, "rate": 0.05 }],
+        "capPerPeriod": 10
+      },
+      {
+        "id": "utilities",
+        "label": "Utilities (min RM250 per cycle)",
+        "rate": 0,
+        "categories": ["utilities"],
+        "overseas": false,
+        "minCategorySpend": 250,
+        "tiers": [{ "minPeriodSpend": 1000, "rate": 0.01 }, { "minPeriodSpend": 2000, "rate": 0.02 }, { "minPeriodSpend": 3000, "rate": 0.05 }],
+        "capPerPeriod": 10
+      },
+      {
+        "id": "overseas",
+        "label": "Overseas spend (min RM500 per cycle)",
+        "rate": 0,
+        "overseas": true,
+        "minCategorySpend": 500,
+        "tiers": [{ "minPeriodSpend": 1000, "rate": 0.01 }, { "minPeriodSpend": 2000, "rate": 0.02 }, { "minPeriodSpend": 3000, "rate": 0.05 }],
+        "capPerPeriod": 50
+      },
+      {
+        "id": "others",
+        "label": "Other spend (min RM500 per cycle)",
+        "rate": 0.002,
+        "categories": ["dining", "travel", "insurance", "others"],
+        "overseas": false,
+        "minCategorySpend": 500
+      }
+    ],
+    "sourceUrl": "https://www.rhbgroup.com/-/media/Files/personal/cards/credit-cards/overview/RHB-Shell-Visa-Credit-Card_Terms.pdf",
+    "verifiedOn": "2026-09-24",
+    "catalogVersion": 1
+  },
+  {
+    "id": "uob-one-classic",
+    "bank": "UOB",
+    "name": "ONE Classic",
+    "rewardType": "cashback",
+    "periodType": "statement",
+    "defaultCycleDay": 8,
+    "tierExcludedCategories": ["utilities"],
+    "rules": [
+      {
+        "id": "petrol",
+        "label": "Petrol (all stations, Setel CardTerus)",
+        "rate": 0,
+        "categories": ["petrol"],
+        "tiers": [{ "minPeriodSpend": 0, "rate": 0.002 }, { "minPeriodSpend": 800, "rate": 0.1 }],
+        "capPerPeriod": 10
+      },
+      {
+        "id": "groceries",
+        "label": "Groceries (selected grocers)",
+        "rate": 0,
+        "categories": ["groceries"],
+        "merchants": [
+          "aeon big", "aeon supermarket", "ben's", "cold storage", "econsave", "everise", "giant", "jaya grocer",
+          "lotus", "mercato", "mydin", "servay", "village grocer", "maxvalu", "food merchant"
+        ],
+        "tiers": [{ "minPeriodSpend": 0, "rate": 0.002 }, { "minPeriodSpend": 800, "rate": 0.1 }],
+        "capPerPeriod": 10
+      },
+      {
+        "id": "dining",
+        "label": "Dining",
+        "rate": 0,
+        "categories": ["dining"],
+        "tiers": [{ "minPeriodSpend": 0, "rate": 0.002 }, { "minPeriodSpend": 800, "rate": 0.1 }],
+        "capPerPeriod": 10
+      },
+      {
+        "id": "grab",
+        "label": "Grab (rides, food, mart, express, GrabPay)",
+        "rate": 0,
+        "merchants": ["grab"],
+        "tiers": [{ "minPeriodSpend": 0, "rate": 0.002 }, { "minPeriodSpend": 800, "rate": 0.1 }],
+        "capPerPeriod": 10
+      },
+      {
+        "id": "other",
+        "label": "Other retail spend",
+        "rate": 0.002,
+        "categories": ["petrol", "groceries", "dining", "online", "travel", "insurance", "others"],
+        "paymentMethods": ["contactless", "online", "physical"]
+      }
+    ],
+    "sourceUrl": "https://www.uob.com.my/assets/web-resources/personal/pdf/cards/credit-cards/one-card/one-card-tnc-eng.pdf",
+    "verifiedOn": "2026-09-24",
+    "catalogVersion": 1
+  },
+  {
+    "id": "alliance-visa-infinite",
+    "bank": "Alliance Bank",
+    "name": "Visa Infinite Credit Card",
+    "rewardType": "points",
+    "pointValueRM": 0.0016666666666666668,
+    "periodType": "statement",
+    "defaultCycleDay": 1,
+    "rules": [
+      {
+        "id": "overseas",
+        "label": "10x Timeless Bonus Points on overseas spend",
+        "rate": 10,
+        "categories": ["groceries", "dining", "online", "ewallet", "utilities", "travel", "insurance", "others"],
+        "overseas": true
+      },
+      {
+        "id": "domestic",
+        "label": "1x Timeless Bonus Points on domestic spend",
+        "rate": 1,
+        "categories": ["groceries", "dining", "online", "ewallet", "utilities", "travel", "insurance", "others"],
+        "overseas": false
+      }
+    ],
+    "sourceUrl": "https://www.alliancebank.com.my/Alliance/media/Documents/Cards/Personal/Credit-Cards/Credit-Card-Terms-Conditions-TNC-EN.pdf",
+    "verifiedOn": "2026-09-24",
+    "catalogVersion": 1
+  },
+  {
+    "id": "alliance-visa-virtual",
+    "bank": "Alliance Bank",
+    "name": "Visa Virtual Credit Card",
+    "rewardType": "points",
+    "pointValueRM": 0.0016666666666666668,
+    "periodType": "statement",
+    "defaultCycleDay": 1,
+    "capGroups": { "8x": 24000 },
+    "rules": [
+      {
+        "id": "ecommerce",
+        "label": "8x TBP on eCommerce (first RM3,000 of eCommerce + eWallet per cycle, then 1x)",
+        "rate": 8,
+        "categories": ["online"],
+        "capGroup": "8x",
+        "overflowRate": 1
+      },
+      {
+        "id": "ecommerce-paid-online",
+        "label": "8x TBP on purchases paid online (shares the RM3,000 per cycle limit, then 1x)",
+        "rate": 8,
+        "categories": ["groceries", "dining", "utilities", "travel", "insurance", "others"],
+        "paymentMethods": ["online"],
+        "capGroup": "8x",
+        "overflowRate": 1
+      },
+      {
+        "id": "ewallet",
+        "label": "8x TBP on eWallet top-up (shares the RM3,000 per cycle limit, then 1x)",
+        "rate": 8,
+        "categories": ["ewallet"],
+        "capGroup": "8x",
+        "overflowRate": 1
+      },
+      {
+        "id": "overseas-dining",
+        "label": "3x TBP on overseas dining",
+        "rate": 3,
+        "categories": ["dining"],
+        "overseas": true
+      },
+      {
+        "id": "other-domestic",
+        "label": "1x TBP on other domestic retail spend",
+        "rate": 1,
+        "categories": ["groceries", "dining", "online", "ewallet", "utilities", "travel", "insurance", "others"],
+        "overseas": false
+      }
+    ],
+    "sourceUrl": "https://www.alliancebank.com.my/Alliance/media/Documents/Cards/Personal/Credit-Cards/Credit-Card-Terms-Conditions-TNC-EN.pdf",
+    "verifiedOn": "2026-09-24",
+    "catalogVersion": 1
+  },
+  {
+    "id": "pbb-quantum-visa",
+    "bank": "Public Bank",
+    "name": "Quantum Visa Credit Card",
+    "rewardType": "cashback",
+    "periodType": "statement",
+    "defaultCycleDay": 1,
+    "rules": [
+      {
+        "id": "contactless",
+        "label": "1% cashback on contactless transactions of RM100 or more (cap RM20 per cycle)",
+        "rate": 0.01,
+        "paymentMethods": ["contactless"],
+        "minTxAmount": 100,
+        "capPerPeriod": 20
+      },
+      {
+        "id": "vip-points",
+        "label": "1x VIP Point on other local retail spend",
+        "rate": 1,
+        "pointValueRM": 0.002,
+        "overseas": false
+      }
+    ],
+    "sourceUrl": "https://www.pbebank.com/en/cards/our-cards/pb-quantum-credit-cards-2/",
+    "verifiedOn": null,
+    "catalogVersion": 1
+  },
+  {
+    "id": "pbb-quantum-mastercard",
+    "bank": "Public Bank",
+    "name": "Quantum Mastercard Credit Card",
+    "rewardType": "cashback",
+    "periodType": "statement",
+    "defaultCycleDay": 1,
+    "rules": [
+      {
+        "id": "overseas",
+        "label": "2% cashback on overseas transactions of RM100 or more (cap RM20 per cycle)",
+        "rate": 0.02,
+        "overseas": true,
+        "minTxAmount": 100,
+        "capPerPeriod": 20
+      },
+      {
+        "id": "vip-points",
+        "label": "1x VIP Point on other local retail spend",
+        "rate": 1,
+        "pointValueRM": 0.002,
+        "overseas": false
+      }
+    ],
+    "sourceUrl": "https://www.pbebank.com/en/cards/our-cards/pb-quantum-credit-cards-2/",
+    "verifiedOn": null,
+    "catalogVersion": 1
+  },
+  {
+    "id": "aeon-amp-visa-platinum",
+    "bank": "AEON",
+    "name": "Member Plus (AMP) Visa Platinum",
+    "rewardType": "cashback",
+    "periodType": "calendar",
+    "capGroups": { "online": 25 },
+    "rules": [
+      {
+        "id": "thank-you-day",
+        "label": "10% cashback at AEON stores and AEON BiG on the 20th and 28th (cap RM100/month)",
+        "rate": 0.1,
+        "merchants": ["aeon"],
+        "daysOfMonth": [20, 28],
+        "overseas": false,
+        "capPerPeriod": 100
+      },
+      {
+        "id": "online-category",
+        "label": "2% cashback on online spending in MYR (cap RM25/month)",
+        "rate": 0.02,
+        "categories": ["online"],
+        "overseas": false,
+        "capGroup": "online"
+      },
+      {
+        "id": "online-payment",
+        "label": "2% cashback on purchases paid online in MYR (shares the RM25/month cap)",
+        "rate": 0.02,
+        "paymentMethods": ["online"],
+        "overseas": false,
+        "capGroup": "online"
+      },
+      {
+        "id": "overseas-points",
+        "label": "6x AEON Points per RM2 overseas spend",
+        "rate": 3,
+        "pointValueRM": 0.005,
+        "overseas": true
+      },
+      {
+        "id": "aeon-store-points",
+        "label": "4x AEON Points per RM2 at AEON stores (except the 20th and 28th)",
+        "rate": 2,
+        "pointValueRM": 0.005,
+        "merchants": ["aeon"],
+        "daysOfMonth": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 30, 31]
+      },
+      {
+        "id": "base-points",
+        "label": "1x AEON Point per RM1 spend (member recognition)",
+        "rate": 1,
+        "pointValueRM": 0.005
+      }
+    ],
+    "sourceUrl": "https://myaeoncredit.com.my/aeon-cards/aeon-member-plus-visa-platinum-credit-card/",
+    "verifiedOn": null,
+    "catalogVersion": 1
+  }
+]
