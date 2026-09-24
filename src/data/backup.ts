@@ -1,5 +1,7 @@
 import { CATEGORIES, PAYMENT_METHODS, type Transaction, type UserCard } from '../engine/types';
 import { validateCardProduct } from '../engine/validate';
+import { resolveCard } from '../engine/resolve';
+import { getProduct } from '../catalog';
 import type { AppSnapshot } from './repository';
 
 export const BACKUP_SCHEMA_VERSION = 1;
@@ -61,6 +63,19 @@ export function parseBackup(text: string): ParseResult {
       } catch {
         return fail(`Custom card "${c.nickname}" is invalid: malformed rules`);
       }
+    } else if (c.overrides !== undefined) {
+      const product = getProduct(c.productId);
+      if (product) {
+        // Unknown product ids are allowed: DataProvider shows such cards as broken.
+        const name = c.nickname || c.id;
+        let errs: string[];
+        try {
+          errs = isObj(c.overrides) ? validateCardProduct(resolveCard(c, product)) : ['overrides must be an object'];
+        } catch {
+          errs = ['malformed rules'];
+        }
+        if (errs.length) return fail(`Card "${name}" has invalid rule overrides: ${errs[0]}`);
+      }
     }
     cardIds.add(c.id);
   }
@@ -86,7 +101,20 @@ export function parseBackup(text: string): ParseResult {
   }
 
   for (const t of b.templates as Obj[]) {
-    if (!isObj(t) || typeof t.id !== 'string' || !cardIds.has(t.userCardId as string)) return fail('A recurring transaction in the backup is malformed.');
+    const okTemplate =
+      isObj(t) &&
+      typeof t.id === 'string' &&
+      typeof t.userCardId === 'string' &&
+      cardIds.has(t.userCardId) &&
+      typeof t.amount === 'number' &&
+      Number.isFinite(t.amount) &&
+      (CATEGORIES as readonly string[]).includes(t.category as string) &&
+      (PAYMENT_METHODS as readonly string[]).includes(t.paymentMethod as string) &&
+      typeof t.startDate === 'string' &&
+      DATE_RE.test(t.startDate) &&
+      typeof t.active === 'boolean' &&
+      (t.overseas === undefined || typeof t.overseas === 'boolean');
+    if (!okTemplate) return fail('A recurring transaction in the backup is malformed.');
   }
 
   const s = b.settings as Obj;
