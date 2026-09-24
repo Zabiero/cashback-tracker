@@ -234,6 +234,67 @@ describe('calculateEarnings', () => {
     expect(e.caps).toContainEqual({ key: 'rule:a', label: 'Dining', usedRM: 10, limitRM: 20 });
   });
 
+  describe('refunds after a cap (net-spend semantics)', () => {
+    it('does not reverse cashback the cap had already absorbed', () => {
+      const c = card({ rules: [{ id: 'cl', label: 'Contactless', rate: 0.01, paymentMethods: ['contactless'], capPerPeriod: 20 }] });
+      const e = calculateEarnings(
+        c,
+        [
+          tx({ amount: 2500, paymentMethod: 'contactless', date: '2026-09-01' }),
+          tx({ amount: 500, paymentMethod: 'contactless', date: '2026-09-02' }),
+          tx({ amount: -500, paymentMethod: 'contactless', date: '2026-09-03' }),
+        ],
+        SEP,
+      );
+      expect(e.totalEarnedRM).toBe(20);
+      expect(e.perTransaction[2].earnedRM).toBe(0);
+    });
+
+    it('reverses only the overflow when a refund keeps net spend at the cap', () => {
+      const c = card({
+        rewardType: 'points',
+        pointValueRM: 0.01,
+        rules: [{ id: 'ecom', label: 'eCommerce', rate: 8, categories: ['online'], capPerPeriod: 24000, overflowRate: 1 }],
+      });
+      const e = calculateEarnings(
+        c,
+        [tx({ amount: 3500, category: 'online', date: '2026-09-01' }), tx({ amount: -500, category: 'online', date: '2026-09-02' })],
+        SEP,
+      );
+      expect(e.totalEarnedRM).toBe(240);
+    });
+
+    it('earns the overflow rate beyond a shared cap group', () => {
+      const c = card({
+        rewardType: 'points',
+        pointValueRM: 0.01,
+        capGroups: { '8x': 24000 },
+        rules: [
+          { id: 'ecom', label: 'eCommerce', rate: 8, categories: ['online'], capGroup: '8x', overflowRate: 1 },
+          { id: 'ewal', label: 'eWallet', rate: 8, categories: ['ewallet'], capGroup: '8x', overflowRate: 1 },
+        ],
+      });
+      const e = calculateEarnings(
+        c,
+        [tx({ amount: 2000, category: 'online', date: '2026-09-01' }), tx({ amount: 2000, category: 'ewallet', date: '2026-09-02' })],
+        SEP,
+      );
+      expect(e.totalEarnedRM).toBe(250);
+    });
+  });
+
+  it('labels a cap group meter with the labels of its rules', () => {
+    const c = card({
+      capGroups: { g: 15 },
+      rules: [
+        { id: 'ecom', label: 'eCommerce', rate: 0.05, categories: ['online'], capGroup: 'g' },
+        { id: 'ewal', label: 'eWallet', rate: 0.05, categories: ['ewallet'], capGroup: 'g' },
+        { id: 'all', label: 'All', rate: 0.01 },
+      ],
+    });
+    expect(calculateEarnings(c, [], SEP).caps).toContainEqual({ key: 'group:g', label: 'eCommerce + eWallet', usedRM: 0, limitRM: 15 });
+  });
+
   it('excludes tierExcludedCategories from the minimum-spend lock', () => {
     const c = card({
       minMonthlySpendToEarn: 500,

@@ -64,12 +64,16 @@ export function calculateEarnings(card: CardProduct, transactions: Transaction[]
 
   const limits: { key: string; label: string; limit: number }[] = [];
   for (const r of card.rules) if (r.capPerPeriod != null) limits.push({ key: `rule:${r.id}`, label: r.label, limit: r.capPerPeriod * unitValueRM(card, r) });
-  for (const [g, limit] of Object.entries(card.capGroups ?? {})) limits.push({ key: `group:${g}`, label: g, limit: limit * cardFactor });
+  for (const [g, limit] of Object.entries(card.capGroups ?? {})) {
+    const groupLabels = card.rules.filter((r) => r.capGroup === g).map((r) => r.label);
+    limits.push({ key: `group:${g}`, label: groupLabels.length ? groupLabels.join(' + ') : g, limit: limit * cardFactor });
+  }
   if (card.totalCapPerPeriod != null) limits.push({ key: 'total', label: 'Card total', limit: card.totalCapPerPeriod * cardFactor });
   const limitOf = new Map(limits.map((l) => [l.key, l.limit]));
 
   const used = new Map<string, number>(); // RM per cap key
   const earnedByRule = new Map<string, number>(); // RM per rule, including overflow (for refund reversal)
+  const uncappedByRule = new Map<string, number>(); // raw RM per rule before caps, net of refunds (net-spend semantics)
   const perTransaction: TxEarning[] = [];
   let totalRM = 0;
 
@@ -101,11 +105,14 @@ export function calculateEarnings(card: CardProduct, transactions: Transaction[]
       for (const k of ruleGroupKeys) used.set(k, (used.get(k) ?? 0) + ruleGroupUsed);
       if (hasTotal) used.set('total', (used.get('total') ?? 0) + final);
     } else {
+      // Net-spend semantics: reverse only what the reduced net period spend no longer earns.
       const alreadyEarned = earnedByRule.get(sel.rule.id) ?? 0;
-      const back = Math.min(-raw, alreadyEarned);
+      const uncappedAfter = (uncappedByRule.get(sel.rule.id) ?? 0) + raw;
+      const back = Math.min(alreadyEarned, Math.max(0, alreadyEarned - uncappedAfter));
       final = back === 0 ? 0 : -back;
       for (const k of keys) used.set(k, Math.max(0, (used.get(k) ?? 0) + final));
     }
+    uncappedByRule.set(sel.rule.id, (uncappedByRule.get(sel.rule.id) ?? 0) + raw);
     earnedByRule.set(sel.rule.id, (earnedByRule.get(sel.rule.id) ?? 0) + final);
     totalRM += final;
     perTransaction.push({
