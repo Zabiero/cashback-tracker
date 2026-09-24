@@ -1,5 +1,5 @@
 import type { CardProduct, Category, PaymentMethod, Rule, Transaction, UserCard } from './types';
-import { calculateEarnings, capKeysFor, round2 } from './earnings';
+import { calculateEarnings, capKeysFor, round2, type CapStatus } from './earnings';
 import { getPeriod } from './periods';
 import { rateFor } from './rules';
 import { formatRate } from './format';
@@ -30,13 +30,15 @@ export interface Recommendation {
 }
 
 const HYPOTHETICAL_ID = '__purchase__';
+// U+FFFF sorts after every real createdAt, so the hypothetical purchase is applied last within its day.
+const LAST_IN_DAY = '\uFFFF';
 
 export function recommend(inputs: CardInput[], purchase: Purchase): Recommendation[] {
   return inputs
     .filter((i) => !i.userCard.archived)
     .map(({ userCard, card, transactions }) => {
       const period = getPeriod(card, purchase.date);
-      const hypo: Transaction = { ...purchase, id: HYPOTHETICAL_ID, userCardId: userCard.id, createdAt: '￿' };
+      const hypo: Transaction = { ...purchase, id: HYPOTHETICAL_ID, userCardId: userCard.id, createdAt: LAST_IN_DAY };
       const before = calculateEarnings(card, transactions, period);
       const after = calculateEarnings(card, [...transactions, hypo], period);
       const incrementalRM = round2(after.totalEarnedRM - before.totalEarnedRM);
@@ -57,7 +59,19 @@ export function recommend(inputs: CardInput[], purchase: Purchase): Recommendati
         const relevant = after.caps.filter((c) => keys.includes(c.key));
         const left = relevant.length ? Math.min(...relevant.map((c) => c.limitRM - c.usedRM)) : null;
         const rewardType = rule.pointValueRM != null ? 'points' : card.rewardType;
-        reason = `${formatRate(rate!, rewardType)} ${rule.label}${left != null ? ` — ${formatRM(round2(left))} cap left` : ''}`;
+        const overflowLeft = (caps: CapStatus[]): number | null => {
+          const ruleGroup = caps.filter((c) => c.key !== 'total' && keys.includes(c.key));
+          return ruleGroup.length ? Math.min(...ruleGroup.map((c) => c.limitRM - c.usedRM)) : null;
+        };
+        const leftBefore = rule.overflowRate != null ? overflowLeft(before.caps) : null;
+        const leftAfter = rule.overflowRate != null ? overflowLeft(after.caps) : null;
+        if (rule.overflowRate != null && leftBefore != null && leftBefore <= 0) {
+          reason = `${formatRate(rule.overflowRate, rewardType)} ${rule.label} (after cap)`;
+        } else if (rule.overflowRate != null && leftAfter != null && leftAfter <= 0) {
+          reason = `${formatRate(rate!, rewardType)} then ${formatRate(rule.overflowRate, rewardType)} ${rule.label}`;
+        } else {
+          reason = `${formatRate(rate!, rewardType)} ${rule.label}${left != null ? ` — ${formatRM(round2(left))} cap left` : ''}`;
+        }
       }
 
       return { userCardId: userCard.id, incrementalRM, rate, ruleLabel: rule?.label ?? null, reason, capUtilisation };

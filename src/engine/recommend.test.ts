@@ -92,4 +92,29 @@ describe('recommend', () => {
     expect(recommend([input], overseasPurchase)[0].incrementalRM).toBe(2);
     expect(recommend([input], domesticPurchase)[0].incrementalRM).toBe(0);
   });
+  describe('overflow-rate reasons', () => {
+    const virtual = (spentAlready: number): CardInput => ({
+      userCard: uc('V'),
+      card: card({
+        rewardType: 'points',
+        pointValueRM: 0.01,
+        rules: [{ id: 'ecom', label: 'eCommerce', rate: 8, categories: ['online'], capPerPeriod: 24000, overflowRate: 1 }],
+      }),
+      transactions: [tx({ userCardId: 'V', amount: spentAlready, category: 'online', date: '2026-09-02' })],
+    });
+    const online = (amount: number): Purchase => ({ amount, category: 'online', paymentMethod: 'online', date: '2026-09-24' });
+
+    it('shows only the overflow rate when the cap was already used up', () => {
+      const r = recommend([virtual(3000)], online(100))[0];
+      expect(r.incrementalRM).toBe(1);
+      expect(r.reason).toBe('1 pts/RM eCommerce (after cap)');
+    });
+
+    it('shows both rates when the purchase crosses the cap', () => {
+      const r = recommend([virtual(2900)], online(200))[0];
+      expect(r.incrementalRM).toBe(9);
+      expect(r.reason).toBe('8 pts/RM then 1 pts/RM eCommerce');
+    });
+  });
 });
+
