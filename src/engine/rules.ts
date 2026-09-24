@@ -1,7 +1,7 @@
 import type { Rule, Transaction } from './types';
-import { weekdayOf } from './dates';
+import { parseISODate, weekdayOf } from './dates';
 
-export type MatchableTx = Pick<Transaction, 'category' | 'merchant' | 'paymentMethod' | 'date'>;
+export type MatchableTx = Pick<Transaction, 'category' | 'merchant' | 'paymentMethod' | 'date' | 'amount' | 'overseas'>;
 
 export function ruleMatches(rule: Rule, tx: MatchableTx): boolean {
   if (rule.categories?.length && !rule.categories.includes(tx.category)) return false;
@@ -17,6 +17,12 @@ export function ruleMatches(rule: Rule, tx: MatchableTx): boolean {
     const m = (tx.merchant ?? '').trim().toLowerCase();
     if (!m || !rule.merchants.some((x) => m.includes(x.trim().toLowerCase()))) return false;
   }
+  if (rule.overseas !== undefined && rule.overseas !== !!tx.overseas) return false;
+  if (rule.minTxAmount != null && Math.abs(tx.amount) < rule.minTxAmount) return false;
+  if (rule.daysOfMonth?.length) {
+    const { d } = parseISODate(tx.date);
+    if (!rule.daysOfMonth.includes(d)) return false;
+  }
   return true;
 }
 
@@ -27,14 +33,20 @@ export function rateFor(rule: Rule, periodSpend: number): number {
   return rate;
 }
 
-export function selectRule(rules: Rule[], tx: MatchableTx, periodSpend: number): { rule: Rule; rate: number } | null {
-  let best: { rule: Rule; rate: number } | null = null;
+export function selectRule(
+  rules: Rule[],
+  tx: MatchableTx,
+  periodSpend: number,
+  unitValue: (rule: Rule) => number = () => 1,
+): { rule: Rule; rate: number } | null {
+  let best: { rule: Rule; rate: number; value: number } | null = null;
   for (const rule of rules) {
     if (!ruleMatches(rule, tx)) continue;
     const rate = rateFor(rule, periodSpend);
-    if (!best || rate > best.rate) best = { rule, rate };
+    const value = rate * unitValue(rule);
+    if (!best || value > best.value) best = { rule, rate, value };
   }
-  return best;
+  return best ? { rule: best.rule, rate: best.rate } : null;
 }
 
 export function nextTierFor(rule: Rule, periodSpend: number): { spendNeeded: number; nextRate: number } | null {

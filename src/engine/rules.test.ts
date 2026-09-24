@@ -28,6 +28,25 @@ describe('ruleMatches', () => {
     expect(ruleMatches(r, tx({ amount: 10, date: '2026-09-26' }))).toBe(true); // Sat
     expect(ruleMatches(r, tx({ amount: 10, date: '2026-09-24' }))).toBe(false); // Thu
   });
+  it('filters by overseas', () => {
+    const overseasOnly: Rule = { id: 'o', label: 'Overseas', rate: 0.02, overseas: true };
+    expect(ruleMatches(overseasOnly, tx({ amount: 10, overseas: true }))).toBe(true);
+    expect(ruleMatches(overseasOnly, tx({ amount: 10 }))).toBe(false);
+    const domesticOnly: Rule = { id: 'd', label: 'Domestic', rate: 0.02, overseas: false };
+    expect(ruleMatches(domesticOnly, tx({ amount: 10 }))).toBe(true);
+    expect(ruleMatches(domesticOnly, tx({ amount: 10, overseas: true }))).toBe(false);
+  });
+  it('filters by minimum transaction amount', () => {
+    const r: Rule = { id: 'm', label: 'Min', rate: 0.02, minTxAmount: 100 };
+    expect(ruleMatches(r, tx({ amount: 99.99 }))).toBe(false);
+    expect(ruleMatches(r, tx({ amount: 100 }))).toBe(true);
+    expect(ruleMatches(r, tx({ amount: -150 }))).toBe(true);
+  });
+  it('filters by day of month', () => {
+    const r: Rule = { id: 'dom', label: 'DOM', rate: 0.02, daysOfMonth: [20, 28] };
+    expect(ruleMatches(r, tx({ amount: 10, date: '2026-09-20' }))).toBe(true);
+    expect(ruleMatches(r, tx({ amount: 10, date: '2026-09-21' }))).toBe(false);
+  });
 });
 
 describe('rateFor', () => {
@@ -55,6 +74,14 @@ describe('selectRule', () => {
   });
   it('returns null when nothing matches', () => {
     expect(selectRule([rules[1]], tx({ amount: 10, category: 'petrol' }), 0)).toBeNull();
+  });
+  it('compares RM value via unitValue rather than raw rate', () => {
+    const mixed: Rule[] = [
+      { id: 'cb', label: 'Cashback', rate: 0.02 },
+      { id: 'pts', label: 'Points', rate: 1 },
+    ];
+    const unitValue = (r: Rule) => (r.id === 'pts' ? 0.005 : 1);
+    expect(selectRule(mixed, tx({ amount: 10 }), 0, unitValue)).toEqual({ rule: mixed[0], rate: 0.02 });
   });
 });
 

@@ -40,4 +40,31 @@ describe('validateCardProduct', () => {
   it('rejects non-objects', () => {
     expect(validateCardProduct(null)).toEqual(['Card must be an object']);
   });
+  it('rejects a non-boolean overseas value', () => {
+    expect(validateCardProduct(card({ rules: [{ id: 'a', label: 'A', rate: 0.01, overseas: 'yes' as never }] }))).toContain(
+      'Rule 1: overseas must be true or false',
+    );
+  });
+  it('rejects a negative minimum transaction amount', () => {
+    expect(validateCardProduct(card({ rules: [{ id: 'a', label: 'A', rate: 0.01, minTxAmount: -1 }] }))).toContain(
+      'Rule 1: minimum transaction amount must be ≥ 0',
+    );
+  });
+  it('rejects a negative minimum category spend', () => {
+    expect(validateCardProduct(card({ rules: [{ id: 'a', label: 'A', rate: 0.01, minCategorySpend: -1 }] }))).toContain(
+      'Rule 1: minimum category spend must be ≥ 0',
+    );
+  });
+  it('rejects out-of-range days of month', () => {
+    expect(validateCardProduct(card({ rules: [{ id: 'a', label: 'A', rate: 0.01, daysOfMonth: [0] }] }))).toContain('Rule 1: days of month must be 1–31');
+  });
+  it('rejects a non-positive point value', () => {
+    expect(validateCardProduct(card({ rules: [{ id: 'a', label: 'A', rate: 0.01, pointValueRM: 0 }] }))).toContain('Rule 1: point value must be > 0');
+  });
+  it('rejects a negative overflow rate', () => {
+    expect(validateCardProduct(card({ rules: [{ id: 'a', label: 'A', rate: 0.01, overflowRate: -1 }] }))).toContain('Rule 1: overflow rate must be ≥ 0');
+  });
+  it('rejects unknown tierExcludedCategories', () => {
+    expect(validateCardProduct(card({ tierExcludedCategories: ['shoes' as never] }))).toContain('Unknown excluded category shoes');
+  });
 });

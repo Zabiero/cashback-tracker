@@ -56,4 +56,40 @@ describe('recommend', () => {
     const lastMonth = { ...dine5(0), transactions: [tx({ userCardId: 'B', amount: 600, category: 'dining', date: '2026-08-20' })] };
     expect(recommend([lastMonth], dining(100))[0].incrementalRM).toBe(5);
   });
+
+  it('unlocks a minCategorySpend rule once the purchase pushes the category over the threshold', () => {
+    const input: CardInput = {
+      userCard: uc('G'),
+      card: card({
+        rules: [
+          { id: 'groc', label: 'Groceries', rate: 0.05, categories: ['groceries'], minCategorySpend: 250 },
+          { id: 'other', label: 'Other', rate: 0.002 },
+        ],
+      }),
+      transactions: [tx({ userCardId: 'G', amount: 200, category: 'groceries', date: '2026-09-02' })],
+    };
+    const purchase: Purchase = { amount: 100, category: 'groceries', paymentMethod: 'physical', date: '2026-09-24' };
+    const r = recommend([input], purchase)[0];
+    expect(r.incrementalRM).toBe(14.6);
+    expect(r.ruleLabel).toBe('Groceries');
+    expect(r.rate).toBe(0.05);
+    expect(r.reason.startsWith('5% Groceries')).toBe(true);
+  });
+
+  it('matches an overseas-only rule based on the purchase flag', () => {
+    const input: CardInput = {
+      userCard: uc('O'),
+      card: card({
+        rules: [
+          { id: 'os', label: 'Overseas', rate: 0.02, overseas: true, capPerPeriod: 20 },
+          { id: 'dom', label: 'Domestic', rate: 0 },
+        ],
+      }),
+      transactions: [],
+    };
+    const overseasPurchase: Purchase = { amount: 100, category: 'others', paymentMethod: 'physical', date: '2026-09-24', overseas: true };
+    const domesticPurchase: Purchase = { amount: 100, category: 'others', paymentMethod: 'physical', date: '2026-09-24' };
+    expect(recommend([input], overseasPurchase)[0].incrementalRM).toBe(2);
+    expect(recommend([input], domesticPurchase)[0].incrementalRM).toBe(0);
+  });
 });

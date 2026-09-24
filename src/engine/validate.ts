@@ -16,6 +16,9 @@ export function validateCardProduct(input: unknown): string[] {
   if (p.periodType === 'statement' && !intIn(p.defaultCycleDay, 1, 28)) e.push('defaultCycleDay must be 1–28');
   if (p.totalCapPerPeriod != null && !nonNeg(p.totalCapPerPeriod)) e.push('totalCapPerPeriod must be ≥ 0');
   if (p.minMonthlySpendToEarn != null && !nonNeg(p.minMonthlySpendToEarn)) e.push('minMonthlySpendToEarn must be ≥ 0');
+  p.tierExcludedCategories?.forEach((c) => {
+    if (!(CATEGORIES as readonly string[]).includes(c)) e.push(`Unknown excluded category ${c}`);
+  });
 
   const groups = p.capGroups ?? {};
   for (const [g, v] of Object.entries(groups)) if (!nonNeg(v)) e.push(`Cap group ${g} must be ≥ 0`);
@@ -52,4 +55,10 @@ function validateRule(r: Rule, at: string, ids: Set<string>, groups: Record<stri
     if (!(PAYMENT_METHODS as readonly string[]).includes(m)) e.push(`${at}: unknown payment method ${m}`);
   });
   if (r.days?.some((d) => !intIn(d, 0, 6))) e.push(`${at}: days must be 0–6`);
+  if (r.overseas !== undefined && typeof r.overseas !== 'boolean') e.push(`${at}: overseas must be true or false`);
+  if (r.minTxAmount != null && !nonNeg(r.minTxAmount)) e.push(`${at}: minimum transaction amount must be ≥ 0`);
+  if (r.minCategorySpend != null && !nonNeg(r.minCategorySpend)) e.push(`${at}: minimum category spend must be ≥ 0`);
+  if (r.daysOfMonth?.some((d) => !intIn(d, 1, 31))) e.push(`${at}: days of month must be 1–31`);
+  if (r.pointValueRM != null && !(nonNeg(r.pointValueRM) && r.pointValueRM > 0)) e.push(`${at}: point value must be > 0`);
+  if (r.overflowRate != null && !nonNeg(r.overflowRate)) e.push(`${at}: overflow rate must be ≥ 0`);
 }

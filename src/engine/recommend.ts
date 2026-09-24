@@ -1,7 +1,7 @@
-import type { CardProduct, Category, PaymentMethod, Transaction, UserCard } from './types';
+import type { CardProduct, Category, PaymentMethod, Rule, Transaction, UserCard } from './types';
 import { calculateEarnings, capKeysFor, round2 } from './earnings';
 import { getPeriod } from './periods';
-import { selectRule } from './rules';
+import { rateFor } from './rules';
 import { formatRate } from './format';
 import { formatRM } from '../lib/money';
 
@@ -11,6 +11,7 @@ export interface Purchase {
   merchant?: string;
   paymentMethod: PaymentMethod;
   date: string;
+  overseas?: boolean;
 }
 
 export interface CardInput {
@@ -39,24 +40,27 @@ export function recommend(inputs: CardInput[], purchase: Purchase): Recommendati
       const before = calculateEarnings(card, transactions, period);
       const after = calculateEarnings(card, [...transactions, hypo], period);
       const incrementalRM = round2(after.totalEarnedRM - before.totalEarnedRM);
-      const sel = selectRule(card.rules, hypo, after.totalSpend);
+      const hypoRuleId = after.perTransaction.find((p) => p.transactionId === HYPOTHETICAL_ID)?.ruleId ?? null;
+      const rule: Rule | undefined = hypoRuleId ? card.rules.find((r) => r.id === hypoRuleId) : undefined;
+      const rate = rule ? rateFor(rule, after.tierSpend) : null;
       const capUtilisation = Math.max(0, ...after.caps.map((c) => (c.limitRM > 0 ? c.usedRM / c.limitRM : 1)));
 
       let reason: string;
       if (after.locked) {
         reason = `Spend ${formatRM(after.locked.spendNeeded)} more this period to unlock rewards`;
-      } else if (!sel) {
+      } else if (!rule) {
         reason = 'No reward for this purchase';
       } else if (incrementalRM === 0) {
         reason = `Cap reached — earns ${formatRM(0)}`;
       } else {
-        const keys = capKeysFor(sel.rule);
+        const keys = capKeysFor(rule);
         const relevant = after.caps.filter((c) => keys.includes(c.key));
         const left = relevant.length ? Math.min(...relevant.map((c) => c.limitRM - c.usedRM)) : null;
-        reason = `${formatRate(sel.rate, card.rewardType)} ${sel.rule.label}${left != null ? ` — ${formatRM(round2(left))} cap left` : ''}`;
+        const rewardType = rule.pointValueRM != null ? 'points' : card.rewardType;
+        reason = `${formatRate(rate!, rewardType)} ${rule.label}${left != null ? ` — ${formatRM(round2(left))} cap left` : ''}`;
       }
 
-      return { userCardId: userCard.id, incrementalRM, rate: sel?.rate ?? null, ruleLabel: sel?.rule.label ?? null, reason, capUtilisation };
+      return { userCardId: userCard.id, incrementalRM, rate, ruleLabel: rule?.label ?? null, reason, capUtilisation };
     })
     .sort((a, b) => b.incrementalRM - a.incrementalRM || a.capUtilisation - b.capUtilisation);
 }

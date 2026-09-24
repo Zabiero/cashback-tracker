@@ -23,6 +23,16 @@ describe('describeRule', () => {
   it('shows point caps in points', () => {
     expect(describeRule({ id: 'p', label: 'P', rate: 5, capPerPeriod: 5000 }, 'points')).toBe('5 pts/RM · cap 5000 pts');
   });
+  it('describes overseas/domestic, min amount, days of month and cap', () => {
+    expect(
+      describeRule({ id: 'a', label: 'A', rate: 0.1, daysOfMonth: [20, 28], overseas: false, minTxAmount: 100, capPerPeriod: 100 }, 'cashback'),
+    ).toBe('10% · Domestic · min RM100.00/txn · on 20th, 28th · cap RM100.00');
+  });
+  it('describes a hybrid points rule with minCategorySpend and overflow, in points even on a cashback card', () => {
+    expect(
+      describeRule({ id: 'p', label: 'P', rate: 8, pointValueRM: 0.01, capPerPeriod: 24000, overflowRate: 1, minCategorySpend: 250 }, 'cashback'),
+    ).toBe('8 pts/RM · needs RM250.00 in category · cap 24000 pts · then 1 pts/RM');
+  });
 });
 
 describe('formatRM', () => {
