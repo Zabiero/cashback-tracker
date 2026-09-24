@@ -9,7 +9,10 @@ export function resolveCard(
   if (product) {
     merged = { ...product, ...userCard.overrides };
     if (userCard.overrides?.pointValueRM == null && pointValueOverrides[product.id] != null) {
-      merged.pointValueRM = pointValueOverrides[product.id];
+      const value = pointValueOverrides[product.id];
+      merged.pointValueRM = value;
+      // Hybrid cards value points per rule; each has a single points currency, so the override applies to all of them.
+      merged.rules = merged.rules.map((r) => (r.pointValueRM != null ? { ...r, pointValueRM: value } : r));
     }
   } else {
     if (!userCard.overrides) throw new Error(`Custom card "${userCard.nickname}" has no definition`);

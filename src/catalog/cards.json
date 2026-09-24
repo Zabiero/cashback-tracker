@@ -165,7 +165,7 @@
       }
     ],
     "sourceUrl": "https://www.uob.com.my/assets/web-resources/personal/pdf/cards/credit-cards/one-card/one-card-tnc-eng.pdf",
-    "verifiedOn": "2026-09-24",
+    "verifiedOn": null,
     "catalogVersion": 1
   },
   {
@@ -208,7 +208,7 @@
     "rules": [
       {
         "id": "ecommerce",
-        "label": "8x TBP on eCommerce (first RM3,000 of eCommerce + eWallet per cycle, then 1x)",
+        "label": "8x TBP on eCommerce (first RM3,000 per cycle, then 1x; RM3,000 limit assumed shared with eWallet — check T&C)",
         "rate": 8,
         "categories": ["online"],
         "capGroup": "8x",
@@ -216,7 +216,7 @@
       },
       {
         "id": "ecommerce-paid-online",
-        "label": "8x TBP on purchases paid online (shares the RM3,000 per cycle limit, then 1x)",
+        "label": "8x TBP on purchases paid online (first RM3,000 per cycle, then 1x; RM3,000 limit assumed shared with eWallet — check T&C)",
         "rate": 8,
         "categories": ["groceries", "dining", "utilities", "travel", "insurance", "others"],
         "paymentMethods": ["online"],
@@ -225,7 +225,7 @@
       },
       {
         "id": "ewallet",
-        "label": "8x TBP on eWallet top-up (shares the RM3,000 per cycle limit, then 1x)",
+        "label": "8x TBP on eWallet top-up (first RM3,000 per cycle, then 1x; RM3,000 limit assumed shared with eCommerce — check T&C)",
         "rate": 8,
         "categories": ["ewallet"],
         "capGroup": "8x",
@@ -247,7 +247,7 @@
       }
     ],
     "sourceUrl": "https://www.alliancebank.com.my/Alliance/media/Documents/Cards/Personal/Credit-Cards/Credit-Card-Terms-Conditions-TNC-EN.pdf",
-    "verifiedOn": "2026-09-24",
+    "verifiedOn": null,
     "catalogVersion": 1
   },
   {
