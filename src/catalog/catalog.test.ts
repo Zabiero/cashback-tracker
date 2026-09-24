@@ -37,3 +37,14 @@ describe('resolveUserCard', () => {
     );
   });
 });
+
+describe('Maybank Ikhwan festive cap wording', () => {
+  it('tells the user to raise the cap for Ramadhan and Syawal and set it back afterwards', () => {
+    const rules = getProduct('maybank-islamic-ikhwan-amex-platinum')!.rules.filter((r) => r.capGroup === 'online-8pct');
+    expect(rules).toHaveLength(2);
+    for (const r of rules) {
+      expect(r.label).toMatch(/cap is RM100 in Ramadhan and Syawal, so raise .* for those months and set it back/);
+      expect(r.label).not.toMatch(/override the cap/);
+    }
+  });
+});

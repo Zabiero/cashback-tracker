@@ -9,14 +9,14 @@
     "rules": [
       {
         "id": "online-category",
-        "label": "8% cashback on online retail spend (cap RM50/month; RM100/month in Ramadhan and Syawal, override the cap in those months)",
+        "label": "8% cashback on online retail spend (cap RM50/month; the cap is RM100 in Ramadhan and Syawal, so raise the shared cap to RM100 in Edit rules for those months and set it back to RM50 afterwards)",
         "rate": 0.08,
         "categories": ["online"],
         "capGroup": "online-8pct"
       },
       {
         "id": "online-payment",
-        "label": "8% cashback on retail purchases paid online (excl. utilities, e-wallet reloads; shares the RM50/month cap; RM100 in Ramadhan and Syawal)",
+        "label": "8% cashback on retail purchases paid online (excl. utilities, e-wallet reloads; shares the RM50/month cap; the cap is RM100 in Ramadhan and Syawal, so raise it for those months and set it back afterwards)",
         "rate": 0.08,
         "categories": ["petrol", "groceries", "dining", "travel", "insurance", "others"],
         "paymentMethods": ["online"],
