@@ -17,6 +17,11 @@ export interface CardNow extends ActiveCard {
   earnings: PeriodEarnings;
 }
 
+/** A statement-cycle catalog card whose statement day the user has not set yet (the catalog day is a placeholder). */
+export function needsStatementDay(userCard: UserCard, card: CardProduct): boolean {
+  return userCard.productId !== null && card.periodType === 'statement' && !userCard.cycleDay;
+}
+
 export function nameOf(d: Pick<SelectorData, 'userCards' | 'resolved'>, userCardId: string): string {
   const uc = d.userCards.find((c) => c.id === userCardId);
   if (!uc) return 'Unknown card';

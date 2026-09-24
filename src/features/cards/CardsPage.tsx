@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import type { CardProduct, UserCard } from '../../engine/types';
 import { useAppData } from '../../app/DataProvider';
-import { nameOf } from '../../app/selectors';
+import { nameOf, needsStatementDay } from '../../app/selectors';
 import { getProduct } from '../../catalog';
 import { describeRule } from '../../engine/format';
+import { getPeriod } from '../../engine/periods';
+import { resolveCard } from '../../engine/resolve';
 import { newId } from '../../lib/id';
 import { AddCardDialog } from './AddCardDialog';
 import { RuleEditor } from './RuleEditor';
-import { newCustomProduct, pickEditable } from './customCard';
+import { catalogOverrides, newCustomProduct } from './customCard';
 
 export function CardsPage() {
   const data = useAppData();
-  const { repo, userCards, resolved, cardErrors, refresh } = data;
+  const { repo, userCards, resolved, cardErrors, refresh, today } = data;
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const visible = userCards.filter((c) => !c.archived);
@@ -31,7 +33,14 @@ export function CardsPage() {
     setEditingId(id);
   }
   async function saveRules(uc: UserCard, draft: CardProduct) {
-    await save(uc.productId ? { ...uc, cycleDay: draft.defaultCycleDay, overrides: pickEditable(draft) } : { ...uc, overrides: draft });
+    const product = uc.productId ? getProduct(uc.productId) : undefined;
+    if (product) {
+      // Keep a statement day the user already chose, even if it equals the catalog placeholder.
+      const keepDay = uc.cycleDay != null || draft.defaultCycleDay !== product.defaultCycleDay;
+      await save({ ...uc, cycleDay: keepDay ? draft.defaultCycleDay : undefined, overrides: catalogOverrides(draft, product) });
+    } else {
+      await save({ ...uc, overrides: draft });
+    }
     setEditingId(null);
   }
   async function reset(uc: UserCard) {
@@ -59,6 +68,7 @@ export function CardsPage() {
         const card = resolved[uc.id];
         const product = uc.productId ? getProduct(uc.productId) : undefined;
         const name = nameOf(data, uc.id);
+        const current = card ? getPeriod(card, today) : null;
         return (
           <section key={uc.id} className="panel" aria-label={name}>
             <h2>{name}</h2>
@@ -66,6 +76,7 @@ export function CardsPage() {
             {card && (
               <>
                 <p>
+                  {needsStatementDay(uc, card) && <span className="badge warn">Set your statement day</span>}{' '}
                   {card.verifiedOn ? <span className="badge">Verified {card.verifiedOn}</span> : <span className="badge warn">Unverified — please check</span>}{' '}
                   {product && product.catalogVersion > uc.catalogVersionSeen && (
                     <>
@@ -74,6 +85,10 @@ export function CardsPage() {
                     </>
                   )}
                 </p>
+                <p className="muted">
+                  Current period: {current?.start} – {current?.end}
+                </p>
+                {card.periodType === 'statement' && <StatementDayForm key={`${uc.id}-${uc.cycleDay ?? ''}`} userCard={uc} onSave={save} />}
                 <ul>
                   {card.rules.map((r) => (
                     <li key={r.id}>
@@ -90,7 +105,7 @@ export function CardsPage() {
             )}
             {editingId === uc.id && card ? (
               <RuleEditor
-                initial={card}
+                initial={product ? resolveCard(uc, product) /* no Settings point values: overrides are diffed against the catalog */ : card}
                 custom={!uc.productId}
                 onSave={(d) => saveRules(uc, d)}
                 onCancel={() => setEditingId(null)}
@@ -107,5 +122,30 @@ export function CardsPage() {
         );
       })}
     </>
+  );
+}
+
+function StatementDayForm({ userCard, onSave }: { userCard: UserCard; onSave(uc: UserCard): Promise<void> }) {
+  const [value, setValue] = useState(userCard.cycleDay != null ? String(userCard.cycleDay) : '');
+  const [error, setError] = useState<string | null>(null);
+  const inputId = `statement-day-${userCard.id}`;
+
+  async function submit() {
+    const day = Number(value.trim());
+    if (value.trim() === '' || !Number.isInteger(day) || day < 1 || day > 28) {
+      setError('Enter a whole number from 1 to 28.');
+      return;
+    }
+    setError(null);
+    await onSave({ ...userCard, cycleDay: day });
+  }
+
+  return (
+    <div className="fields">
+      <label htmlFor={inputId}>Statement day (1–28)</label>
+      <input id={inputId} inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} />
+      <button type="button" onClick={submit}>Save statement day</button>
+      {error && <p className="error" role="alert">{error}</p>}
+    </div>
   );
 }

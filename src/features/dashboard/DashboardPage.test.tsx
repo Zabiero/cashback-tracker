@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { DashboardPage } from './DashboardPage';
 import { renderWithData, seedCard } from '../../test/renderWithData';
 
@@ -33,5 +33,15 @@ describe('DashboardPage', () => {
     });
     expect(screen.getByRole('heading', { name: 'Card A' })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('Card B: At least one rule is required');
+  });
+  it('flags a statement-cycle catalog card whose statement day is not set', async () => {
+    await renderWithData(<DashboardPage />, {
+      seed: async (repo) => {
+        await repo.saveUserCard({ id: 's1', productId: 'rhb-shell-visa', nickname: 'Shell unset', catalogVersionSeen: 1, archived: false });
+        await repo.saveUserCard({ id: 's2', productId: 'rhb-shell-visa', nickname: 'Shell set', cycleDay: 15, catalogVersionSeen: 1, archived: false });
+      },
+    });
+    expect(within(screen.getByRole('region', { name: 'Shell unset' })).getByText('Set your statement day')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Shell set' })).queryByText('Set your statement day')).not.toBeInTheDocument();
   });
 });

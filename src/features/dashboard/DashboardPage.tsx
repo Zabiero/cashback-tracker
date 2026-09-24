@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAppData } from '../../app/DataProvider';
-import { currentEarnings, nameOf } from '../../app/selectors';
+import { currentEarnings, nameOf, needsStatementDay } from '../../app/selectors';
 import { CapMeter } from '../../components/CapMeter';
 import { round2 } from '../../engine/earnings';
 import { formatRate } from '../../engine/format';
@@ -43,7 +43,17 @@ export function DashboardPage() {
 
           {rows.map(({ userCard, card, name, earnings }) => (
             <section key={userCard.id} className="panel" aria-label={name}>
-              <h2>{name}</h2>
+              <h2>
+                {name}
+                {needsStatementDay(userCard, card) && (
+                  <>
+                    {' '}
+                    <Link to="/cards" className="badge warn">
+                      Set your statement day
+                    </Link>
+                  </>
+                )}
+              </h2>
               <div className="muted">
                 {earnings.period.start} – {earnings.period.end} · spent {formatRM(earnings.totalSpend)} · earned {formatRM(earnings.totalEarnedRM)}
               </div>
