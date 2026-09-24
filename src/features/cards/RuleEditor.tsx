@@ -39,6 +39,13 @@ function toggle<T>(list: T[] | undefined, v: T): T[] | undefined {
   return s.size ? [...s] : undefined;
 }
 
+/** A cap-group row keyed by a stable id, so removing a row never shifts another row's inputs. */
+interface CapGroupRow {
+  key: string;
+  name: string;
+  amount: string;
+}
+
 const OVERSEAS_OPTIONS = [
   ['any', 'Anywhere'],
   ['true', 'Overseas only'],
@@ -47,14 +54,14 @@ const OVERSEAS_OPTIONS = [
 
 export function RuleEditor({ initial, custom = false, onSave, onCancel, onReset }: Props) {
   const [draft, setDraft] = useState<CardProduct>(() => JSON.parse(JSON.stringify(initial)) as CardProduct);
-  const [groups, setGroups] = useState<[string, string][]>(() => Object.entries(initial.capGroups ?? {}).map(([k, v]) => [k, String(v)]));
+  const [groups, setGroups] = useState<CapGroupRow[]>(() => Object.entries(initial.capGroups ?? {}).map(([k, v]) => ({ key: newId(), name: k, amount: String(v) })));
   const [errors, setErrors] = useState<string[]>([]);
   const isPct = draft.rewardType === 'cashback';
   const patch = (p: Partial<CardProduct>) => setDraft((d) => ({ ...d, ...p }));
   const setRule = (i: number, p: Partial<Rule>) => setDraft((d) => ({ ...d, rules: d.rules.map((r, j) => (j === i ? { ...r, ...p } : r)) }));
 
   function save() {
-    const capGroups = Object.fromEntries(groups.filter(([k]) => k.trim()).map(([k, v]) => [k.trim(), Number(v)]));
+    const capGroups = Object.fromEntries(groups.filter((g) => g.name.trim()).map((g) => [g.name.trim(), Number(g.amount)]));
     const next: CardProduct = { ...draft, capGroups: Object.keys(capGroups).length ? capGroups : undefined };
     const errs = validateCardProduct(next);
     setErrors(errs);
@@ -110,20 +117,20 @@ export function RuleEditor({ initial, custom = false, onSave, onCancel, onReset 
 
       <fieldset>
         <legend>Shared cap groups</legend>
-        {groups.map(([name, amount], i) => (
-          <div key={i}>
+        {groups.map(({ key, name, amount }) => (
+          <div key={key}>
             <label className="inline">
               Group name
-              <input defaultValue={name} onChange={(e) => setGroups((g) => g.map((x, j) => (j === i ? [e.target.value, x[1]] : x)))} />
+              <input defaultValue={name} onChange={(e) => setGroups((g) => g.map((x) => (x.key === key ? { ...x, name: e.target.value } : x)))} />
             </label>
             <label className="inline">
               Cap
-              <input inputMode="decimal" defaultValue={amount} onChange={(e) => setGroups((g) => g.map((x, j) => (j === i ? [x[0], e.target.value] : x)))} />
+              <input inputMode="decimal" defaultValue={amount} onChange={(e) => setGroups((g) => g.map((x) => (x.key === key ? { ...x, amount: e.target.value } : x)))} />
             </label>
-            <button type="button" onClick={() => setGroups((g) => g.filter((_, j) => j !== i))}>Remove group</button>
+            <button type="button" onClick={() => setGroups((g) => g.filter((x) => x.key !== key))}>Remove group</button>
           </div>
         ))}
-        <button type="button" onClick={() => setGroups((g) => [...g, ['', '0']])}>Add cap group</button>
+        <button type="button" onClick={() => setGroups((g) => [...g, { key: newId(), name: '', amount: '0' }])}>Add cap group</button>
       </fieldset>
 
       {draft.rules.map((rule, i) => {

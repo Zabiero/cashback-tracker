@@ -65,4 +65,12 @@ describe('RuleEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save rules' }));
     expect(onSave.mock.calls[0][0]).toMatchObject({ tierExcludedCategories: ['utilities'] });
   });
+  it('keeps the right cap-group inputs after removing a non-last group', async () => {
+    render(<RuleEditor initial={card({ capGroups: { first: 10, second: 20 } })} onSave={() => {}} onCancel={() => {}} />);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Remove group' })[0]);
+    const names = screen.getAllByLabelText('Group name');
+    expect(names).toHaveLength(1);
+    expect(names[0]).toHaveValue('second');
+    expect(screen.getByLabelText('Cap')).toHaveValue('20');
+  });
 });
