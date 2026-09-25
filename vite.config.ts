@@ -3,7 +3,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // GitHub Pages serves the app from /cashback-tracker/; local dev, preview and e2e stay at /.
+  base: mode === 'pages' ? '/cashback-tracker/' : '/',
   plugins: [
     react(),
     VitePWA({
@@ -24,4 +26,4 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
   },
-});
+}));
