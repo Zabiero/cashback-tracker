@@ -4,3 +4,6 @@ dev-dist
 test-results
 playwright-report
 *.tsbuildinfo
+
+# Real bank statements — never commit (public repo)
+statements-samples/

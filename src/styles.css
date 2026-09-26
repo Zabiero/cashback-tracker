@@ -40,3 +40,8 @@ button.primary { background: var(--accent); color: #fff; border-color: var(--acc
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
 .results { list-style: none; padding: 0; display: grid; gap: 8px; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--border); }
+.chip-overdue { background: #fee2e2; color: #991b1b; }
+.chip-soon { background: #fef3c7; color: #78350f; }
+.chip-paid { background: #dcfce7; color: #166534; }
+.field-issue input, .field-issue select { border-color: var(--danger); }

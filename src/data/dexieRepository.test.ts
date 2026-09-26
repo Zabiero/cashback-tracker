@@ -1,8 +1,9 @@
+import Dexie from 'dexie';
 import { DexieRepository } from './dexieRepository';
 import { DEFAULT_SETTINGS } from './repository';
 import { checkStorage } from './storageCheck';
 import type { UserCard } from '../engine/types';
-import { tx } from '../test/fixtures';
+import { statement, tx } from '../test/fixtures';
 
 const repo = () => new DexieRepository(`test-${Math.random()}`);
 const uc: UserCard = { id: 'u1', productId: 'rhb-shell-visa', nickname: '', catalogVersionSeen: 1, archived: false };
@@ -58,5 +59,44 @@ describe('DexieRepository', () => {
 describe('checkStorage', () => {
   it('reports IndexedDB as available', async () => {
     expect(await checkStorage()).toBe(true);
+  });
+});
+
+describe('statements', () => {
+  it('saves, lists and deletes statements', async () => {
+    const r = repo();
+    const s = statement({ id: 'a' });
+    await r.saveStatement(s);
+    expect(await r.listStatements()).toEqual([s]);
+    await r.deleteStatement('a');
+    expect(await r.listStatements()).toEqual([]);
+  });
+
+  it('includes statements in export and replace', async () => {
+    const r = repo();
+    await r.saveUserCard(uc);
+    await r.saveStatement(statement({ id: 'a', userCardId: 'u1' }));
+    const snap = await r.exportAll();
+    expect(snap.statements).toHaveLength(1);
+    const other = repo();
+    await other.saveStatement(statement({ id: 'old' }));
+    await other.replaceAll(snap);
+    expect((await other.listStatements()).map((s) => s.id)).toEqual(['a']);
+  });
+
+  it('upgrades a version-1 database without losing data', async () => {
+    const name = `upgrade-${Math.random()}`;
+    const v1 = new Dexie(name);
+    v1.version(1).stores({ userCards: 'id', transactions: 'id, userCardId, date', templates: 'id', settings: 'key' });
+    await v1.table('userCards').put(uc);
+    await v1.table('transactions').put(tx({ id: 't1', userCardId: 'u1', amount: 10 }));
+    await v1.table('settings').put({ key: 'app', schemaVersion: 1, lastBackupAt: '2026-09-01', pointValueOverrides: { x: 0.01 } });
+    v1.close();
+
+    const upgraded = new DexieRepository(name);
+    expect(await upgraded.listUserCards()).toEqual([uc]);
+    expect((await upgraded.listTransactions()).map((t) => t.id)).toEqual(['t1']);
+    expect((await upgraded.getSettings()).lastBackupAt).toBe('2026-09-01');
+    expect(await upgraded.listStatements()).toEqual([]);
   });
 });

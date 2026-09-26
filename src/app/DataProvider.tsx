@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { CardProduct, RecurringTemplate, Settings, Transaction, UserCard } from '../engine/types';
+import type { CardProduct, RecurringTemplate, Settings, Statement, Transaction, UserCard } from '../engine/types';
 import type { Repository } from '../data/repository';
 import { checkStorage } from '../data/storageCheck';
 import { runRecurring } from '../data/recurringRunner';
@@ -13,6 +13,7 @@ export interface AppData {
   transactions: Transaction[];
   templates: RecurringTemplate[];
   settings: Settings;
+  statements: Statement[];
   resolved: Record<string, CardProduct>;
   cardErrors: Record<string, string>;
   storageOk: boolean;
@@ -25,6 +26,7 @@ interface Loaded {
   transactions: Transaction[];
   templates: RecurringTemplate[];
   settings: Settings;
+  statements: Statement[];
 }
 
 const Ctx = createContext<AppData | null>(null);
@@ -41,13 +43,14 @@ export function DataProvider({ repo, today = todayISO, children }: { repo: Repos
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [userCards, transactions, templates, settings] = await Promise.all([
+    const [userCards, transactions, templates, settings, statements] = await Promise.all([
       repo.listUserCards(),
       repo.listTransactions(),
       repo.listTemplates(),
       repo.getSettings(),
+      repo.listStatements(),
     ]);
-    setLoaded({ userCards, transactions, templates, settings });
+    setLoaded({ userCards, transactions, templates, settings, statements });
   }, [repo]);
 
   useEffect(() => {

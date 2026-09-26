@@ -10,6 +10,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Default patterns plus .mjs, so the PDF.js worker is precached for offline use.
+      workbox: { globPatterns: ['**/*.{js,mjs,wasm,css,html}'] },
       manifest: {
         name: 'Cashback Tracker',
         short_name: 'Cashback',

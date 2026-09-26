@@ -18,8 +18,18 @@ describe('SettingsPage', () => {
     const { repo } = await renderWithData(<SettingsPage />, { seed: (r) => seedCard(r).then(() => undefined) });
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     await userEvent.click(screen.getByRole('button', { name: 'Export backup' }));
+    // Wait for the confirmation message: it is only set after saveSettings() and refresh()
+    // resolve, so by the time it appears the settings write is guaranteed to be durable.
+    // Reading repo.getSettings() right after userEvent.click() (without this wait) raced the
+    // export handler's internal awaits and was flaky.
+    expect(await screen.findByText('Backup exported.')).toBeInTheDocument();
     expect(click).toHaveBeenCalled();
     expect((await repo.getSettings()).lastBackupAt).toBe('2026-09-24');
+  });
+
+  it('notes that saved PDF passwords are not included in backups', async () => {
+    await renderWithData(<SettingsPage />);
+    expect(screen.getByText('Saved PDF passwords are not included in backups.')).toBeInTheDocument();
   });
 
   it('previews then imports a backup', async () => {
@@ -30,6 +40,7 @@ describe('SettingsPage', () => {
         transactions: [{ id: 't', userCardId: 'u1', date: '2026-09-01', amount: 10, category: 'others', paymentMethod: 'physical', createdAt: 'a' }],
         templates: [],
         settings: DEFAULT_SETTINGS,
+        statements: [],
       },
       '2026-09-24T00:00:00Z',
     );
@@ -92,7 +103,7 @@ describe('SettingsPage', () => {
   it('shows an error when the import cannot be saved', async () => {
     const { repo } = await renderWithData(<SettingsPage />);
     vi.spyOn(repo, 'replaceAll').mockRejectedValueOnce(new Error('quota exceeded'));
-    const backup = makeBackup({ userCards: [], transactions: [], templates: [], settings: DEFAULT_SETTINGS }, '2026-09-24T00:00:00Z');
+    const backup = makeBackup({ userCards: [], transactions: [], templates: [], settings: DEFAULT_SETTINGS, statements: [] }, '2026-09-24T00:00:00Z');
     await userEvent.upload(screen.getByLabelText('Import backup file'), new File([JSON.stringify(backup)], 'b.json', { type: 'application/json' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Replace my data' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not import the backup: quota exceeded');

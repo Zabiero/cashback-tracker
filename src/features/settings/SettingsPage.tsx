@@ -110,6 +110,7 @@ export function SettingsPage() {
       <section className="panel fields">
         <h2>Backup</h2>
         <p className="muted">Your data lives only in this browser. Last backup: {settings.lastBackupAt ?? 'never'}.</p>
+        <p className="muted">Saved PDF passwords are not included in backups.</p>
         <div>
           <button type="button" className="primary" onClick={exportBackup}>Export backup</button>
         </div>

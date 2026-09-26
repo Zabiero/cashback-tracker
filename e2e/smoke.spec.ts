@@ -35,3 +35,27 @@ test('a backup restores data in a fresh browser', async ({ page, browser }) => {
   await expect(page2.getByRole('heading', { level: 2 })).toHaveCount(1);
   await fresh.close();
 });
+
+test('add a bill manually, see it on the dashboard, mark it paid', async ({ page }) => {
+  await page.goto('/');
+  await addFirstCatalogCard(page);
+  await page.getByRole('link', { name: 'Bills' }).click();
+  await page.getByRole('button', { name: 'Add manually' }).click();
+  await page.getByLabel('Card').selectOption({ index: 1 });
+  const today = new Date();
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const stmt = new Date(today); stmt.setDate(stmt.getDate() - 15);
+  const due = new Date(today); due.setDate(due.getDate() + 5);
+  await page.getByLabel('Statement date').fill(iso(stmt));
+  await page.getByLabel('Payment due date').fill(iso(due));
+  await page.getByLabel('Statement balance (RM)').fill('500');
+  await page.getByLabel('Minimum due (RM)').fill('25');
+  await page.getByRole('button', { name: 'Save statement' }).click();
+  await page.getByRole('link', { name: 'Dashboard' }).click();
+  await expect(page.getByRole('region', { name: 'Upcoming payments' })).toContainText('Due in 5 days');
+  await page.getByRole('link', { name: 'Bills' }).click();
+  await page.getByRole('button', { name: 'Mark paid' }).click();
+  await page.getByRole('button', { name: 'Save payment' }).click();
+  await page.getByRole('link', { name: 'Dashboard' }).click();
+  await expect(page.getByRole('region', { name: 'Upcoming payments' })).toHaveCount(0);
+});

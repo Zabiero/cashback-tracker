@@ -1,4 +1,4 @@
-import type { CardProduct, Transaction } from '../engine/types';
+import type { CardProduct, Statement, Transaction } from '../engine/types';
 import type { Period } from '../engine/periods';
 
 let seq = 0;
@@ -32,3 +32,19 @@ export function card(p: Partial<CardProduct> = {}): CardProduct {
 }
 
 export const SEP: Period = { start: '2026-09-01', end: '2026-09-30' };
+
+export function statement(p: Partial<Statement> = {}): Statement {
+  seq += 1;
+  return {
+    id: `s${seq}`,
+    userCardId: 'uc1',
+    statementDate: '2026-09-08',
+    dueDate: '2026-09-28',
+    statementBalance: 1234.5,
+    minimumDue: 61.73,
+    source: 'manual',
+    paymentStatus: 'unpaid',
+    createdAt: `c${String(seq).padStart(8, '0')}`,
+    ...p,
+  };
+}

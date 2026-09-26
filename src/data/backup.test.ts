@@ -1,12 +1,13 @@
 import { makeBackup, parseBackup } from './backup';
 import { DEFAULT_SETTINGS, type AppSnapshot } from './repository';
-import { card, tx } from '../test/fixtures';
+import { card, statement, tx } from '../test/fixtures';
 
 const snap = (): AppSnapshot => ({
   userCards: [{ id: 'u1', productId: 'rhb-shell-visa', nickname: '', catalogVersionSeen: 1, archived: false }],
   transactions: [tx({ id: 'a', userCardId: 'u1', amount: 10, date: '2026-08-02' }), tx({ id: 'b', userCardId: 'u1', amount: 20, date: '2026-09-05' })],
   templates: [],
   settings: DEFAULT_SETTINGS,
+  statements: [],
 });
 const text = (o: unknown) => JSON.stringify(o);
 
@@ -128,5 +129,38 @@ describe('backup', () => {
       s.userCards.push({ id: 'u2', productId: 'gone-card', nickname: 'Old', catalogVersionSeen: 1, archived: false, overrides: { rules: [] } });
       expect(parseBackup(text(makeBackup(s, 'x'))).ok).toBe(true);
     });
+  });
+});
+
+describe('backup v2', () => {
+  it('round-trips statements', () => {
+    const base = { ...snap(), statements: [statement({ id: 'st1', userCardId: 'u1' })] };
+    const r = parseBackup(JSON.stringify(makeBackup(base, 'x')));
+    expect(r.ok && r.data.statements).toEqual(base.statements);
+  });
+  it('imports a version-1 backup with no statements', () => {
+    const b = { ...makeBackup(snap(), 'x'), schemaVersion: 1 } as Record<string, unknown>;
+    delete b.statements;
+    const r = parseBackup(JSON.stringify(b));
+    expect(r.ok && r.data.statements).toEqual([]);
+  });
+  it('never exports or imports saved PDF passwords', () => {
+    const s = snap();
+    s.userCards[0] = { ...s.userCards[0], pdfPassword: 'secret', last4: '1234' };
+    const file = makeBackup(s, 'x');
+    expect(JSON.stringify(file)).not.toContain('secret');
+    expect(file.userCards[0].last4).toBe('1234');
+    const tampered = { ...file, userCards: [{ ...file.userCards[0], pdfPassword: 'secret' }] };
+    const r = parseBackup(JSON.stringify(tampered));
+    expect(r.ok && r.data.userCards[0].pdfPassword).toBeUndefined();
+  });
+  it('rejects malformed statements and bad last4', () => {
+    const bad = { ...snap(), statements: [statement({ id: 'st1', userCardId: 'u1', minimumDue: -1 })] };
+    expect(parseBackup(JSON.stringify(makeBackup(bad, 'x')))).toEqual({ ok: false, error: 'Statement st1 is malformed.' });
+    const orphan = { ...snap(), statements: [statement({ id: 'st2', userCardId: 'nope' })] };
+    expect(parseBackup(JSON.stringify(makeBackup(orphan, 'x')))).toEqual({ ok: false, error: 'Statement st2 refers to a card that is not in the backup.' });
+    const s = snap();
+    s.userCards[0] = { ...s.userCards[0], last4: '12a4' };
+    expect(parseBackup(JSON.stringify(makeBackup(s, 'x')))).toEqual({ ok: false, error: 'A card in the backup is malformed.' });
   });
 });

@@ -4,7 +4,7 @@ import { renderWithData } from './test/renderWithData';
 
 it('renders navigation for every screen', async () => {
   await renderWithData(<Layout />);
-  for (const name of ['Dashboard', 'Which card?', 'Transactions', 'Cards', 'Reports', 'Settings']) {
+  for (const name of ['Dashboard', 'Which card?', 'Bills', 'Transactions', 'Cards', 'Reports', 'Settings']) {
     expect(screen.getByRole('link', { name })).toBeInTheDocument();
   }
 });

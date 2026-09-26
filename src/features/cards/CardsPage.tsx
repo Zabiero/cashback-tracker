@@ -89,6 +89,12 @@ export function CardsPage() {
                   Current period: {current?.start} – {current?.end}
                 </p>
                 {card.periodType === 'statement' && <StatementDayForm key={`${uc.id}-${uc.cycleDay ?? ''}`} userCard={uc} onSave={save} />}
+                <Last4Form key={`${uc.id}-${uc.last4 ?? ''}`} userCard={uc} onSave={save} />
+                {uc.pdfPassword && (
+                  <button type="button" onClick={() => save({ ...uc, pdfPassword: undefined })}>
+                    Forget saved PDF password
+                  </button>
+                )}
                 <ul>
                   {card.rules.map((r) => (
                     <li key={r.id}>
@@ -145,6 +151,31 @@ function StatementDayForm({ userCard, onSave }: { userCard: UserCard; onSave(uc:
       <label htmlFor={inputId}>Statement day (1–28)</label>
       <input id={inputId} inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} />
       <button type="button" onClick={submit}>Save statement day</button>
+      {error && <p className="error" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+function Last4Form({ userCard, onSave }: { userCard: UserCard; onSave(uc: UserCard): Promise<void> }) {
+  const [value, setValue] = useState(userCard.last4 ?? '');
+  const [error, setError] = useState<string | null>(null);
+  const inputId = `last4-${userCard.id}`;
+
+  async function submit() {
+    const trimmed = value.trim();
+    if (trimmed !== '' && !/^\d{4}$/.test(trimmed)) {
+      setError('Enter exactly 4 digits.');
+      return;
+    }
+    setError(null);
+    await onSave({ ...userCard, last4: trimmed || undefined });
+  }
+
+  return (
+    <div className="fields">
+      <label htmlFor={inputId}>Last 4 digits</label>
+      <input id={inputId} inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} />
+      <button type="button" onClick={submit}>Save last 4 digits</button>
       {error && <p className="error" role="alert">{error}</p>}
     </div>
   );

@@ -59,6 +59,8 @@ export interface UserCard {
   overrides?: Partial<CardProduct>;
   catalogVersionSeen: number;
   archived: boolean;
+  last4?: string; // 4 digits; matches uploaded statements to this card
+  pdfPassword?: string; // only when the user ticked "remember on this device"
 }
 
 export interface Transaction {
@@ -93,4 +95,25 @@ export interface Settings {
   schemaVersion: number;
   lastBackupAt: string | null;
   pointValueOverrides: Record<string, number>; // productId -> RM per point
+}
+
+export const BANK_IDS = ['maybank', 'rhb', 'uob', 'alliance', 'pbb', 'aeon'] as const;
+export type BankId = (typeof BANK_IDS)[number];
+
+export const PAYMENT_STATUSES = ['unpaid', 'paidFull', 'paidMin', 'paidPartial'] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+export interface Statement {
+  id: string;
+  userCardId: string;
+  statementDate: string;
+  dueDate: string;
+  statementBalance: number; // RM; negative = credit balance
+  minimumDue: number; // RM, >= 0
+  source: 'reader' | 'manual';
+  readerBank?: BankId;
+  paymentStatus: PaymentStatus;
+  paidAmount?: number;
+  paidOn?: string;
+  createdAt: string;
 }

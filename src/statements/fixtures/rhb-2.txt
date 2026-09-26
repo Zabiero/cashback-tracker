@@ -1,0 +1,20 @@
+Credit Card Statement / Penyata Kad Kredit
+Page No / Muka Surat 1 of 4
+Statement Date / Tarikh Penyata : 25 Jun 2026
+RHB Bank Berhad (6171-M)
+Payment Due Date
+15/07/2026
+Tarikh Bayaran Matang
+Combined Card Limit(RM)
+MR CARD HOLDER
+8,000.00
+Gabungan Had Kredit(RM)
+1 JALAN CONTOH,
+50000 KUALA LUMPUR
+YOUR ACCOUNT DETAILS / BUTIRAN AKAUN ANDA
+Account Number Card Type Outstanding Balance (RM) Past Due Balance (RM) Minimum Payment Due (RM)
+Nombor Akaun Jenis Kad Baki Terkini (RM) Baki Tertunggak (RM) Bayaran Minima (RM)
+XXXX-XXXX-XXXX-2222 SHELL VISA CARD 1,024.60 0.00 51.23
+XXXX-XXXX-XXXX-2223 SHELL VISA CARD 0.00 0.00 0.00
+Total / Jumlah 1,024.60 0.00 51.23
+WARNING! NOTICE ON PAYING MINIMUM MONTHLY REPAYMENT

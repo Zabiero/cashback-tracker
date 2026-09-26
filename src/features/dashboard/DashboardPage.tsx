@@ -6,6 +6,7 @@ import { round2 } from '../../engine/earnings';
 import { formatRate } from '../../engine/format';
 import { CATEGORY_LABELS } from '../../lib/labels';
 import { formatRM } from '../../lib/money';
+import { UpcomingPayments } from './UpcomingPayments';
 
 export function DashboardPage() {
   const data = useAppData();
@@ -17,6 +18,7 @@ export function DashboardPage() {
   return (
     <>
       <h1>Dashboard</h1>
+      <UpcomingPayments />
       {errors.length > 0 && (
         <div className="panel error" role="alert">
           {errors.map(([id, msg]) => (

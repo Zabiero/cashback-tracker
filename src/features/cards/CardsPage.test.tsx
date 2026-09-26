@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CardsPage } from './CardsPage';
 import { renderWithData, seedCard } from '../../test/renderWithData';
@@ -34,8 +34,10 @@ describe('CardsPage', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const { repo } = await renderWithData(<CardsPage />, { seed: (r) => seedCard(r).then(() => undefined) });
     await userEvent.click(screen.getByRole('button', { name: 'Archive' }));
+    // Wait for the archived card to drop off the screen: this proves the save + refresh()
+    // after the click has resolved, so the repo read below can't race it.
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Test Card' })).not.toBeInTheDocument());
     expect((await repo.listUserCards())[0].archived).toBe(true);
-    expect(screen.queryByRole('heading', { name: 'Test Card' })).not.toBeInTheDocument();
   });
   describe('statement day', () => {
     const shell = getProduct('rhb-shell-visa')!;
@@ -74,6 +76,35 @@ describe('CardsPage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Enter a whole number from 1 to 28.');
       expect((await repo.listUserCards())[0].cycleDay).toBeUndefined();
     });
+  });
+
+  it('saves and clears the last 4 digits', async () => {
+    const { repo } = await renderWithData(<CardsPage />, { seed: (r) => seedCard(r).then(() => undefined) });
+    const input = screen.getByLabelText('Last 4 digits');
+    await userEvent.type(input, '12a4');
+    await userEvent.click(screen.getByRole('button', { name: 'Save last 4 digits' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter exactly 4 digits.');
+    await userEvent.clear(input);
+    await userEvent.type(input, '1234');
+    await userEvent.click(screen.getByRole('button', { name: 'Save last 4 digits' }));
+    expect((await repo.listUserCards())[0].last4).toBe('1234');
+    await waitFor(() => expect(screen.getByLabelText('Last 4 digits')).toHaveValue('1234'));
+    await userEvent.clear(screen.getByLabelText('Last 4 digits'));
+    await userEvent.click(screen.getByRole('button', { name: 'Save last 4 digits' }));
+    await waitFor(async () => expect((await repo.listUserCards())[0].last4).toBeUndefined());
+    expect(screen.getByLabelText('Last 4 digits')).toHaveValue('');
+  });
+
+  it('forgets a saved PDF password', async () => {
+    const { repo } = await renderWithData(<CardsPage />, {
+      seed: async (r) => {
+        const uc = await seedCard(r);
+        await r.saveUserCard({ ...uc, pdfPassword: 'secret' });
+      },
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Forget saved PDF password' }));
+    expect((await repo.listUserCards())[0].pdfPassword).toBeUndefined();
+    expect(screen.queryByRole('button', { name: 'Forget saved PDF password' })).not.toBeInTheDocument();
   });
 
   describe('rule editor overrides on catalog cards', () => {

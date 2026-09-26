@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { RecurringTemplate, Settings, Transaction, UserCard } from '../engine/types';
+import type { RecurringTemplate, Settings, Statement, Transaction, UserCard } from '../engine/types';
 import { DEFAULT_SETTINGS, type AppSnapshot, type Repository, type TransactionFilter } from './repository';
 
 type SettingsRow = Settings & { key: 'app' };
@@ -9,11 +9,13 @@ class CashbackDB extends Dexie {
   transactions!: Table<Transaction, string>;
   templates!: Table<RecurringTemplate, string>;
   settings!: Table<SettingsRow, string>;
+  statements!: Table<Statement, string>;
 
   constructor(name: string) {
     super(name);
-    // Schema migrations: add this.version(2).stores({...}).upgrade(tx => ...) when the shape changes.
+    // Schema migrations: add this.version(3).stores({...}).upgrade(tx => ...) for the next shape change.
     this.version(1).stores({ userCards: 'id', transactions: 'id, userCardId, date', templates: 'id', settings: 'key' });
+    this.version(2).stores({ statements: 'id, userCardId, dueDate' });
   }
 }
 
@@ -61,22 +63,33 @@ export class DexieRepository implements Repository {
   async saveSettings(s: Settings) {
     await this.db.settings.put({ ...s, key: 'app' });
   }
+  listStatements() {
+    return this.db.statements.toArray();
+  }
+  async saveStatement(s: Statement) {
+    await this.db.statements.put(s);
+  }
+  async deleteStatement(id: string) {
+    await this.db.statements.delete(id);
+  }
   async exportAll(): Promise<AppSnapshot> {
     return {
       userCards: await this.listUserCards(),
       transactions: await this.listTransactions(),
       templates: await this.listTemplates(),
       settings: await this.getSettings(),
+      statements: await this.listStatements(),
     };
   }
   async replaceAll(s: AppSnapshot) {
-    const { userCards, transactions, templates, settings } = this.db;
-    await this.db.transaction('rw', [userCards, transactions, templates, settings], async () => {
-      await Promise.all([userCards.clear(), transactions.clear(), templates.clear(), settings.clear()]);
+    const { userCards, transactions, templates, settings, statements } = this.db;
+    await this.db.transaction('rw', [userCards, transactions, templates, settings, statements], async () => {
+      await Promise.all([userCards.clear(), transactions.clear(), templates.clear(), settings.clear(), statements.clear()]);
       await userCards.bulkPut(s.userCards);
       await transactions.bulkPut(s.transactions);
       await templates.bulkPut(s.templates);
       await settings.put({ ...s.settings, key: 'app' });
+      await statements.bulkPut(s.statements ?? []);
     });
   }
 }

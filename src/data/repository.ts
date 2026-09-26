@@ -1,4 +1,4 @@
-import type { RecurringTemplate, Settings, Transaction, UserCard } from '../engine/types';
+import type { RecurringTemplate, Settings, Statement, Transaction, UserCard } from '../engine/types';
 
 export interface TransactionFilter {
   userCardId?: string;
@@ -11,6 +11,7 @@ export interface AppSnapshot {
   transactions: Transaction[];
   templates: RecurringTemplate[];
   settings: Settings;
+  statements: Statement[];
 }
 
 export const DEFAULT_SETTINGS: Settings = { schemaVersion: 1, lastBackupAt: null, pointValueOverrides: {} };
@@ -27,6 +28,9 @@ export interface Repository {
   saveTemplate(t: RecurringTemplate): Promise<void>;
   getSettings(): Promise<Settings>;
   saveSettings(s: Settings): Promise<void>;
+  listStatements(): Promise<Statement[]>;
+  saveStatement(s: Statement): Promise<void>;
+  deleteStatement(id: string): Promise<void>;
   exportAll(): Promise<AppSnapshot>;
   replaceAll(snapshot: AppSnapshot): Promise<void>;
 }

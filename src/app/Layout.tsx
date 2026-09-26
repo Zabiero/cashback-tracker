@@ -4,6 +4,7 @@ import { useAppData } from './DataProvider';
 import { needsBackupReminder } from './backupReminder';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { WhichCardPage } from '../features/recommend/WhichCardPage';
+import { BillsPage } from '../features/bills/BillsPage';
 import { TransactionsPage } from '../features/transactions/TransactionsPage';
 import { CardsPage } from '../features/cards/CardsPage';
 import { ReportsPage } from '../features/reports/ReportsPage';
@@ -12,6 +13,7 @@ import { SettingsPage } from '../features/settings/SettingsPage';
 const NAV = [
   { to: '/', label: 'Dashboard' },
   { to: '/which', label: 'Which card?' },
+  { to: '/bills', label: 'Bills' },
   { to: '/transactions', label: 'Transactions' },
   { to: '/cards', label: 'Cards' },
   { to: '/reports', label: 'Reports' },
@@ -50,6 +52,7 @@ export function Layout() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/which" element={<WhichCardPage />} />
+          <Route path="/bills" element={<BillsPage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/cards" element={<CardsPage />} />
           <Route path="/reports" element={<ReportsPage />} />

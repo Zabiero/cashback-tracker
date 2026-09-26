@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import { DashboardPage } from './DashboardPage';
 import { renderWithData, seedCard } from '../../test/renderWithData';
+import { statement } from '../../test/fixtures';
 
 describe('DashboardPage', () => {
   it('invites the user to add a card when there are none', async () => {
@@ -43,5 +44,27 @@ describe('DashboardPage', () => {
     });
     expect(within(screen.getByRole('region', { name: 'Shell unset' })).getByText('Set your statement day')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Shell set' })).queryByText('Set your statement day')).not.toBeInTheDocument();
+  });
+
+  it('shows upcoming and overdue payments, soonest first', async () => {
+    await renderWithData(<DashboardPage />, {
+      seed: async (r) => {
+        await seedCard(r, {}, 'A', 'Card A');
+        await r.saveStatement(statement({ id: 'x', userCardId: 'A', statementDate: '2026-09-01', dueDate: '2026-09-21', statementBalance: 100, minimumDue: 10 }));
+        await r.saveStatement(statement({ id: 'y', userCardId: 'A', statementDate: '2026-09-08', dueDate: '2026-09-28', statementBalance: 200, minimumDue: 20 }));
+        await r.saveStatement(statement({ id: 'z', userCardId: 'A', statementDate: '2026-09-15', dueDate: '2026-10-20', statementBalance: 300, minimumDue: 30 }));
+      },
+    });
+    const panel = screen.getByRole('region', { name: 'Upcoming payments' });
+    const items = within(panel).getAllByRole('listitem');
+    expect(items.map((i) => i.textContent)).toEqual([
+      'Card A — Overdue by 3 days — RM100.00 (min RM10.00)',
+      'Card A — Due in 4 days — RM200.00 (min RM20.00)',
+    ]);
+  });
+
+  it('hides the panel when nothing is due soon', async () => {
+    await renderWithData(<DashboardPage />);
+    expect(screen.queryByRole('region', { name: 'Upcoming payments' })).not.toBeInTheDocument();
   });
 });
