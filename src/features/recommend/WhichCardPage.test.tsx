@@ -18,6 +18,17 @@ describe('WhichCardPage', () => {
     expect(screen.getByText('Enter an amount to compare your cards.')).toBeInTheDocument();
   });
 
+  it('marks the top pick as Best', async () => {
+    await setup();
+    await userEvent.type(screen.getByLabelText('Amount (RM)'), '100');
+    await userEvent.click(screen.getByRole('button', { name: 'Dining' }));
+    const items = screen.getAllByRole('listitem');
+    expect(items[0]).toHaveClass('best');
+    expect(within(items[0]).getByText('Best')).toBeInTheDocument();
+    expect(items[1]).not.toHaveClass('best');
+    expect(within(items[1]).queryByText('Best')).not.toBeInTheDocument();
+  });
+
   it('ranks cards for the purchase', async () => {
     await setup();
     await userEvent.type(screen.getByLabelText('Amount (RM)'), '100');

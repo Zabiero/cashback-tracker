@@ -7,6 +7,8 @@ import { PurchaseFields, emptyDraft, type PurchaseDraft } from '../../components
 import { knownMerchants, lastCategoryFor } from '../../lib/merchantMemory';
 import { formatRM, parseMoney } from '../../lib/money';
 import { newId } from '../../lib/id';
+import { cx } from '../../lib/cx';
+import { PageHeader } from '../../components/PageHeader';
 
 export function WhichCardPage() {
   const data = useAppData();
@@ -67,8 +69,8 @@ export function WhichCardPage() {
   if (!inputs.length) {
     return (
       <>
-        <h1>Which card?</h1>
-        <p>
+        <PageHeader title="Which card?" />
+        <p className="panel">
           <Link to="/cards">Add your cards</Link> to get recommendations.
         </p>
       </>
@@ -77,11 +79,11 @@ export function WhichCardPage() {
 
   return (
     <>
-      <h1>Which card?</h1>
+      <PageHeader title="Which card?" />
       <section className="panel">
         <PurchaseFields value={draft} onChange={setDraft} merchants={merchants} categoryFor={(m) => lastCategoryFor(m, transactions)} />
       </section>
-      {message && <p role="status">{message}</p>}
+      {message && <p role="status" className="status-msg">{message}</p>}
       {error && (
         <p className="error" role="alert">
           {error}
@@ -91,21 +93,31 @@ export function WhichCardPage() {
         <p className="muted">Enter an amount to compare your cards.</p>
       ) : (
         <ol className="results">
-          {results.map((r, i) => (
-            <li key={r.userCardId} className="panel">
-              <strong>
-                {i === 0 && r.incrementalRM > 0 ? '🥇 ' : ''}
-                <span>{nameOf(data, r.userCardId)}</span>
-              </strong>
-              <div>
-                <span>{formatRM(r.incrementalRM)}</span>
-              </div>
-              <div className="muted">{r.reason}</div>
-              <button type="button" onClick={() => log(r)} disabled={saving} aria-label={`Log it to ${nameOf(data, r.userCardId)}`}>
-                Log it
-              </button>
-            </li>
-          ))}
+          {results.map((r, i) => {
+            const best = i === 0 && r.incrementalRM > 0;
+            return (
+              <li key={r.userCardId} className={cx('panel', best && 'best')}>
+                <div className="card-head">
+                  <strong className="row-title">
+                    <span>{nameOf(data, r.userCardId)}</span>
+                    {best && (
+                      <>
+                        {' '}
+                        <span className="chip chip-best">Best</span>
+                      </>
+                    )}
+                  </strong>
+                  <span className="amount amount-lg">{formatRM(r.incrementalRM)}</span>
+                </div>
+                <div className="muted">{r.reason}</div>
+                <div className="action-row">
+                  <button type="button" className={best ? 'primary' : undefined} onClick={() => log(r)} disabled={saving} aria-label={`Log it to ${nameOf(data, r.userCardId)}`}>
+                    Log it
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ol>
       )}
       <p className="muted">Estimates only — check your bank statement</p>
