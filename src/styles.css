@@ -59,6 +59,7 @@ ul, ol { margin: 0 0 var(--s2); padding-left: 20px; }
 .fields { display: grid; gap: var(--s3); }
 .fields > button, .fields > div > button { justify-self: start; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); margin: var(--s4) 0; }
+.form-grid > button { justify-self: start; align-self: end; }
 @media (max-width: 700px) { .form-grid { grid-template-columns: minmax(0, 1fr); } }
 .filters { display: flex; flex-wrap: wrap; gap: var(--s3); }
 .filters label { flex: 1 1 160px; }

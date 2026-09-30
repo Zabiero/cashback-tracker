@@ -6,6 +6,7 @@ import type { AppSnapshot } from '../../data/repository';
 import type { CardProduct } from '../../engine/types';
 import { getProduct } from '../../catalog';
 import { downloadText, readFileText } from '../../lib/download';
+import { PageHeader } from '../../components/PageHeader';
 
 interface PointProduct {
   pid: string;
@@ -104,14 +105,14 @@ export function SettingsPage() {
   const s = pending?.summary;
   return (
     <>
-      <h1>Settings</h1>
-      {message && <p role="status">{message}</p>}
+      <PageHeader title="Settings" />
+      {message && <p role="status" className="status-msg">{message}</p>}
 
       <section className="panel fields">
         <h2>Backup</h2>
         <p className="muted">Your data lives only in this browser. Last backup: {settings.lastBackupAt ?? 'never'}.</p>
         <p className="muted">Saved PDF passwords are not included in backups.</p>
-        <div>
+        <div className="action-row">
           <button type="button" className="primary" onClick={exportBackup}>Export backup</button>
         </div>
         <label>
@@ -125,8 +126,10 @@ export function SettingsPage() {
               {s.cards} card{s.cards === 1 ? '' : 's'}, {s.transactions} transaction{s.transactions === 1 ? '' : 's'}
               {s.from ? ` (${s.from} to ${s.to})` : ''}. This replaces all current data.
             </p>
-            <button type="button" onClick={confirmImport} disabled={importing}>Replace my data</button>{' '}
-            <button type="button" onClick={() => setPending(null)}>Cancel</button>
+            <div className="action-row">
+              <button type="button" onClick={confirmImport} disabled={importing}>Replace my data</button>
+              <button type="button" onClick={() => setPending(null)}>Cancel</button>
+            </div>
           </div>
         )}
       </section>
@@ -148,7 +151,7 @@ export function SettingsPage() {
             );
           })}
           {pointError && <p className="error" role="alert">{pointError}</p>}
-          <div>
+          <div className="action-row">
             <button type="button" onClick={savePointValues}>Save point values</button>
           </div>
         </section>

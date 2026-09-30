@@ -10,6 +10,8 @@ import { newId } from '../../lib/id';
 import { AddCardDialog } from './AddCardDialog';
 import { RuleEditor } from './RuleEditor';
 import { catalogOverrides, newCustomProduct } from './customCard';
+import { PageHeader } from '../../components/PageHeader';
+import { Icon } from '../../components/Icon';
 
 export function CardsPage() {
   const data = useAppData();
@@ -57,12 +59,16 @@ export function CardsPage() {
 
   return (
     <>
-      <h1>Cards</h1>
-      {adding ? (
-        <AddCardDialog onAdd={addFromCatalog} onCustom={addCustom} onClose={() => setAdding(false)} />
-      ) : (
-        <button type="button" className="primary" onClick={() => setAdding(true)}>Add card</button>
-      )}
+      <PageHeader
+        title="Cards"
+        actions={!adding && (
+          <button type="button" className="primary" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={18} />
+            Add card
+          </button>
+        )}
+      />
+      {adding && <AddCardDialog onAdd={addFromCatalog} onCustom={addCustom} onClose={() => setAdding(false)} />}
 
       {visible.map((uc) => {
         const card = resolved[uc.id];
@@ -71,11 +77,13 @@ export function CardsPage() {
         const current = card ? getPeriod(card, today) : null;
         return (
           <section key={uc.id} className="panel" aria-label={name}>
-            <h2>{name}</h2>
+            <div className="card-head">
+              <h2>{name}</h2>
+            </div>
             {cardErrors[uc.id] && <p className="error" role="alert">{cardErrors[uc.id]}</p>}
             {card && (
               <>
-                <p>
+                <p className="chips">
                   {needsStatementDay(uc, card) && <span className="badge warn">Set your statement day</span>}{' '}
                   {card.verifiedOn ? <span className="badge">Verified {card.verifiedOn}</span> : <span className="badge warn">Unverified — please check</span>}{' '}
                   {product && product.catalogVersion > uc.catalogVersionSeen && (
@@ -88,14 +96,16 @@ export function CardsPage() {
                 <p className="muted">
                   Current period: {current?.start} – {current?.end}
                 </p>
-                {/* Keys must differ between the two forms: remounting on save refreshes their inputs. */}
-                {card.periodType === 'statement' && <StatementDayForm key={`day-${uc.id}-${uc.cycleDay ?? ''}`} userCard={uc} onSave={save} />}
-                <Last4Form key={`last4-${uc.id}-${uc.last4 ?? ''}`} userCard={uc} onSave={save} />
-                {uc.pdfPassword && (
-                  <button type="button" onClick={() => save({ ...uc, pdfPassword: undefined })}>
-                    Forget saved PDF password
-                  </button>
-                )}
+                <div className="form-grid">
+                  {/* Keys must differ between the two forms: remounting on save refreshes their inputs. */}
+                  {card.periodType === 'statement' && <StatementDayForm key={`day-${uc.id}-${uc.cycleDay ?? ''}`} userCard={uc} onSave={save} />}
+                  <Last4Form key={`last4-${uc.id}-${uc.last4 ?? ''}`} userCard={uc} onSave={save} />
+                  {uc.pdfPassword && (
+                    <button type="button" onClick={() => save({ ...uc, pdfPassword: undefined })}>
+                      Forget saved PDF password
+                    </button>
+                  )}
+                </div>
                 <ul>
                   {card.rules.map((r) => (
                     <li key={r.id}>
@@ -119,10 +129,10 @@ export function CardsPage() {
                 onReset={uc.productId ? () => reset(uc) : undefined}
               />
             ) : (
-              <div>
-                {card && <button type="button" onClick={() => setEditingId(uc.id)}>Edit rules</button>}{' '}
-                <button type="button" onClick={() => rename(uc)}>Rename</button>{' '}
-                <button type="button" onClick={() => archive(uc)}>Archive</button>
+              <div className="action-row">
+                {card && <button type="button" onClick={() => setEditingId(uc.id)}>Edit rules</button>}
+                <button type="button" className="link" onClick={() => rename(uc)}>Rename</button>
+                <button type="button" className="link danger" onClick={() => archive(uc)}>Archive</button>
               </div>
             )}
           </section>
