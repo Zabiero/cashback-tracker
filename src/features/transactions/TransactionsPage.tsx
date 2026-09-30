@@ -7,6 +7,7 @@ import { CATEGORY_LABELS } from '../../lib/labels';
 import { formatRM } from '../../lib/money';
 import { newId } from '../../lib/id';
 import { TransactionForm } from './TransactionForm';
+import { PageHeader } from '../../components/PageHeader';
 
 export function TransactionsPage() {
   const data = useAppData();
@@ -62,7 +63,7 @@ export function TransactionsPage() {
 
   return (
     <>
-      <h1>Transactions</h1>
+      <PageHeader title="Transactions" />
       <TransactionForm
         key={editing?.id ?? 'new'}
         cards={cards}
@@ -73,12 +74,12 @@ export function TransactionsPage() {
         onCancel={editing ? () => setEditing(null) : undefined}
       />
 
-      <section className="panel" aria-label="Filters">
-        <label className="inline">
+      <section className="panel filters" aria-label="Filters">
+        <label>
           Month
           <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
         </label>
-        <label className="inline">
+        <label>
           Card
           <select value={cardFilter} onChange={(e) => setCardFilter(e.target.value)}>
             <option value="">All cards</option>
@@ -89,7 +90,7 @@ export function TransactionsPage() {
             ))}
           </select>
         </label>
-        <label className="inline">
+        <label>
           Category
           <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="">All categories</option>
@@ -103,42 +104,46 @@ export function TransactionsPage() {
       </section>
 
       {rows.length === 0 ? (
-        <p className="muted">No transactions match.</p>
+        <p className="panel muted">No transactions match.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th><th>Card</th><th>Merchant</th><th>Category</th><th>Amount</th><th>Cashback</th><th />
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((t) => (
-              <tr key={t.id}>
-                <td>{t.date}</td>
-                <td>{nameOf(data, t.userCardId)}</td>
-                <td>{t.merchant ?? ''}{t.overseas ? ' · Overseas' : ''}</td>
-                <td>{CATEGORY_LABELS[t.category]}</td>
-                <td>{formatRM(t.amount)}</td>
-                <td>{formatRM(earned.get(t.id) ?? 0)}</td>
-                <td>
-                  <button type="button" onClick={() => setEditing(t)}>Edit</button>{' '}
-                  <button type="button" onClick={() => remove(t)}>Delete</button>
-                </td>
+        <div className="table-wrap">
+          <table className="stack-on-phone">
+            <thead>
+              <tr>
+                <th>Date</th><th>Card</th><th>Merchant</th><th>Category</th><th className="num">Amount</th><th className="num">Cashback</th><th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((t) => (
+                <tr key={t.id}>
+                  <td className="tx-date">{t.date}</td>
+                  <td className="tx-card">{nameOf(data, t.userCardId)}</td>
+                  <td className="tx-merchant">{t.merchant ?? ''}{t.overseas ? ' · Overseas' : ''}</td>
+                  <td className="tx-category">{CATEGORY_LABELS[t.category]}</td>
+                  <td className="tx-amount num">{formatRM(t.amount)}</td>
+                  <td className="tx-cashback num">{formatRM(earned.get(t.id) ?? 0)}</td>
+                  <td className="tx-actions num">
+                    <button type="button" className="link" onClick={() => setEditing(t)}>Edit</button>
+                    <button type="button" className="link danger" onClick={() => remove(t)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <p className="muted">Estimates only — check your bank statement</p>
 
       {templates.length > 0 && (
         <section className="panel" aria-label="Recurring transactions">
           <h2>Recurring</h2>
-          <ul>
+          <ul className="rows">
             {templates.map((t) => (
               <li key={t.id}>
-                {nameOf(data, t.userCardId)} · {t.merchant ?? CATEGORY_LABELS[t.category]} · {formatRM(t.amount)} {t.active ? '' : '(stopped)'}{' '}
-                <button type="button" onClick={() => toggleTemplate(t)}>{t.active ? 'Stop' : 'Resume'}</button>
+                <span>
+                  {nameOf(data, t.userCardId)} · {t.merchant ?? CATEGORY_LABELS[t.category]} · {formatRM(t.amount)} {t.active ? '' : '(stopped)'}
+                </span>
+                <button type="button" className="link" onClick={() => toggleTemplate(t)}>{t.active ? 'Stop' : 'Resume'}</button>
               </li>
             ))}
           </ul>
