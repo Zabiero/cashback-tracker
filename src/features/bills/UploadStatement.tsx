@@ -135,18 +135,23 @@ export function UploadStatement({ onSave, onDone, initialFile }: Props) {
 
   if (step.kind === 'pick' || step.kind === 'reading') {
     return (
-      <>
+      <div className="panel fields">
         <label>
           Statement PDF
           <input ref={inputRef} type="file" accept=".pdf,application/pdf" onChange={(e) => void onFileChange(e)} />
         </label>
-        {step.kind === 'reading' && <p>Reading…</p>}
-        <p>
+        {step.kind === 'reading' && (
+          <p className="reading">
+            <span className="spinner" aria-hidden="true" />
+            Reading…
+          </p>
+        )}
+        <div>
           <button type="button" onClick={onDone}>
             Cancel
           </button>
-        </p>
-      </>
+        </div>
+      </div>
     );
   }
 
@@ -181,19 +186,19 @@ export function UploadStatement({ onSave, onDone, initialFile }: Props) {
 
   if (step.kind === 'notPdf' || step.kind === 'error') {
     return (
-      <>
-        <p>{step.kind === 'notPdf' ? "This file isn't a readable PDF." : 'Something went wrong reading this file.'}</p>
+      <div className="panel">
+        <p className="error">{step.kind === 'notPdf' ? "This file isn't a readable PDF." : 'Something went wrong reading this file.'}</p>
         <button type="button" onClick={chooseAnotherFile}>
           Choose another file
         </button>
-      </>
+      </div>
     );
   }
 
   if (step.kind === 'noText') {
     return (
       <>
-        <p>This PDF has no text (it may be a scan). Please enter the values manually.</p>
+        <p className="banner">This PDF has no text (it may be a scan). Please enter the values manually.</p>
         <StatementForm
           cards={cards}
           today={data.today}
@@ -218,7 +223,7 @@ export function UploadStatement({ onSave, onDone, initialFile }: Props) {
   return (
     <>
       {total > 1 && <h2>Statement {index + 1} of {total}</h2>}
-      {nothingToPay && <p>This card has nothing to pay this month.</p>}
+      {nothingToPay && <p className="tip">This card has nothing to pay this month.</p>}
       <StatementForm
         key={index}
         cards={cards}
@@ -242,11 +247,13 @@ export function UploadStatement({ onSave, onDone, initialFile }: Props) {
           Skip this card
         </button>
       )}
-      <details>
-        <summary>Show extracted text</summary>
-        <p className="muted">Personal details are partly hidden. Check and remove anything personal before sharing.</p>
-        <pre>{redact(outcome.text)}</pre>
-      </details>
+      <div className="panel">
+        <details>
+          <summary>Show extracted text</summary>
+          <p className="muted">Personal details are partly hidden. Check and remove anything personal before sharing.</p>
+          <pre>{redact(outcome.text)}</pre>
+        </details>
+      </div>
     </>
   );
 }

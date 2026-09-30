@@ -11,6 +11,9 @@ import { newId } from '../../lib/id';
 import { StatementForm, draftFrom, type StatementInput } from './StatementForm';
 import { MarkPaidForm } from './MarkPaidForm';
 import { UploadStatement } from './UploadStatement';
+import { PageHeader } from '../../components/PageHeader';
+import { Money } from '../../components/Money';
+import { Icon } from '../../components/Icon';
 
 export interface SaveMeta {
   source: 'reader' | 'manual';
@@ -65,14 +68,17 @@ export function BillsPage() {
     const st = statementStatus(s, today);
     return (
       <li key={s.id} className="panel" aria-label={`${name} statement ${s.statementDate}`}>
-        <strong>{name}</strong> <span className={`chip chip-${st.tone}`}>{st.label}</span>
+        <div className="card-head">
+          <strong className="row-title">{name}</strong>
+          <span className={`chip chip-${st.tone}`}>{st.label}</span>
+        </div>
+        <div>
+          <Money value={s.statementBalance} size="lg" /> <span className="muted">Minimum {formatRM(s.minimumDue)}</span>
+        </div>
         <div className="muted">
           Statement {s.statementDate} · Due {s.dueDate}
         </div>
-        <div>
-          Balance {formatRM(s.statementBalance)} · Minimum {formatRM(s.minimumDue)}
-        </div>
-        <div>
+        <div className="action-row">
           {s.paymentStatus === 'unpaid' ? (
             <button type="button" onClick={() => setMode({ kind: 'pay', s })}>Mark paid</button>
           ) : (
@@ -85,13 +91,14 @@ export function BillsPage() {
             >
               Mark unpaid
             </button>
-          )}{' '}
-          <button type="button" onClick={() => downloadText(`${slug(name)}-due-${s.dueDate}.ics`, makeIcs(s, name, icsStamp(new Date())), 'text/calendar')}>
+          )}
+          <button type="button" className="link" onClick={() => downloadText(`${slug(name)}-due-${s.dueDate}.ics`, makeIcs(s, name, icsStamp(new Date())), 'text/calendar')}>
             Add to calendar
-          </button>{' '}
-          <button type="button" onClick={() => setMode({ kind: 'edit', s })}>Edit</button>{' '}
+          </button>
+          <button type="button" className="link" onClick={() => setMode({ kind: 'edit', s })}>Edit</button>
           <button
             type="button"
+            className="link danger"
             onClick={() => {
               if (!window.confirm(`Delete this ${name} statement?`)) return;
               void run(async () => {
@@ -111,7 +118,7 @@ export function BillsPage() {
     const existing = mode.kind === 'edit' ? mode.s : undefined;
     return (
       <>
-        <h1>{existing ? 'Edit statement' : 'Add statement'}</h1>
+        <PageHeader title={existing ? 'Edit statement' : 'Add statement'} />
         <StatementForm
           cards={cards}
           today={today}
@@ -128,7 +135,7 @@ export function BillsPage() {
   if (mode.kind === 'upload') {
     return (
       <>
-        <h1>Upload statement</h1>
+        <PageHeader title="Upload statement" />
         <UploadStatement initialFile={mode.file} onSave={(v, meta) => saveStatement(v, meta)} onDone={() => setMode({ kind: 'list' })} />
       </>
     );
@@ -137,7 +144,7 @@ export function BillsPage() {
   if (mode.kind === 'pay') {
     return (
       <>
-        <h1>Mark paid — {nameOf(data, mode.s.userCardId)}</h1>
+        <PageHeader title={`Mark paid — ${nameOf(data, mode.s.userCardId)}`} />
         <MarkPaidForm
           statement={mode.s}
           today={today}
@@ -154,32 +161,38 @@ export function BillsPage() {
 
   return (
     <>
-      <h1>Bills</h1>
-      {cards.length === 0 ? (
-        <p>
+      <PageHeader
+        title="Bills"
+        actions={
+          cards.length > 0 && (
+            <>
+              {/* The control itself is the file picker, so one tap opens Files on iPhone (Safari only allows this on a real tap). */}
+              <label className="file-button primary">
+                <Icon name="upload" size={18} />
+                Upload statement
+                <input
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  className="visually-hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = ''; // so choosing the same file again still triggers a change
+                    if (f) setMode({ kind: 'upload', file: f });
+                  }}
+                />
+              </label>
+              <button type="button" onClick={() => setMode({ kind: 'new' })}>Add manually</button>
+            </>
+          )
+        }
+      />
+      {cards.length === 0 && (
+        <p className="panel">
           <Link to="/cards">Add your cards</Link> first.
-        </p>
-      ) : (
-        <p>
-          {/* The control itself is the file picker, so one tap opens Files on iPhone (Safari only allows this on a real tap). */}
-          <label className="file-button">
-            Upload statement
-            <input
-              type="file"
-              accept=".pdf,application/pdf"
-              className="visually-hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = ''; // so choosing the same file again still triggers a change
-                if (f) setMode({ kind: 'upload', file: f });
-              }}
-            />
-          </label>{' '}
-          <button type="button" className="primary" onClick={() => setMode({ kind: 'new' })}>Add manually</button>
         </p>
       )}
       {error && <p className="error" role="alert">{error}</p>}
-      {statements.length === 0 && <p className="muted">No statements yet.</p>}
+      {statements.length === 0 && <p className="panel muted">No statements yet.</p>}
       {unpaid.length > 0 && (
         <section aria-label="Unpaid">
           <h2>Unpaid</h2>
@@ -187,7 +200,7 @@ export function BillsPage() {
         </section>
       )}
       {paid.length > 0 && (
-        <section aria-label="Paid">
+        <section aria-label="Paid" className="paid">
           <h2>Paid</h2>
           <ul className="results">{paid.map(row)}</ul>
         </section>

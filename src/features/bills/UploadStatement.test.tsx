@@ -35,6 +35,18 @@ async function upload(f: File = file()) {
 describe('Upload statement', () => {
   beforeEach(() => mockRead.mockReset());
 
+  it('shows a spinner while reading', async () => {
+    // Held open until the end; the file's beforeEach returns the mock, which Vitest then calls as a teardown.
+    let finish!: (v: Awaited<ReturnType<typeof readStatement>>) => void;
+    mockRead.mockReturnValue(new Promise((r) => (finish = r)));
+    await renderWithData(<BillsPage />, { seed });
+    await upload();
+    expect(await screen.findByText('Reading…')).toBeInTheDocument();
+    expect(document.querySelector('.spinner')).not.toBeNull();
+    finish({ ok: false, reason: 'notPdf' });
+    expect(await screen.findByText("This file isn't a readable PDF.")).toBeInTheDocument();
+  });
+
   it('reads, reviews and saves a statement, storing last 4 digits on the card', async () => {
     mockRead.mockResolvedValue(good);
     const { repo } = await renderWithData(<BillsPage />, { seed });
