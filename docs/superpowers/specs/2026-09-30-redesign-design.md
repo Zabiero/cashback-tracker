@@ -65,7 +65,7 @@ Existing `CapMeter` is restyled via CSS only (thicker 10px rounded track, label 
 
 ## Navigation
 
-- **Desktop (> 700px):** left sidebar 220px, white, "Finory" wordmark at top, each of the 7 links = icon + label, active = `--accent-soft` background + accent text. Content column max 960px, centred, 32px padding.
+- **Desktop (> 700px):** left sidebar 220px, white, "Cashback Tracker" wordmark at top (the app's own name — not the Finory brand, which belongs to another company), each of the 7 links = icon + label, active = `--accent-soft` background + accent text. Content column max 960px, centred, 32px padding.
 - **Phone (≤ 700px):** fixed bottom tab bar with 5 items (Home, Which card?, Bills, Transactions, More), each an icon above an 11px label, active = accent colour. Bottom padding respects `env(safe-area-inset-bottom)`; `index.html` viewport gets `viewport-fit=cover`.
 - **Link names:** existing tests click links named `Cards`, `Bills`, etc. The phone bar shows *Home, Which card?, Bills, Transactions, More*; to keep tests and accessible names stable, a single `<nav aria-label="Main">` keeps all 7 `NavLink`s (names unchanged: "Dashboard", "Which card?", …). On phones, CSS hides Cards/Reports/Settings from the bar and shows a `More` link (`/more`); the Dashboard link shows visible label "Home" via a phone-only span while keeping accessible name "Dashboard" (`aria-label="Dashboard"`). On desktop the More link is hidden.
 - **More page (`/more`):** `PageHeader "More"` + a card list of three rows (icon, label, chevron) linking to Cards, Reports, Settings. On desktop the route still works (plain list). The More tab is shown active when on `/more`, `/cards`, `/reports` or `/settings`.
