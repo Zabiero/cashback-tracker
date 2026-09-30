@@ -17,7 +17,7 @@ export interface SaveMeta {
   readerBank?: BankId;
 }
 
-type Mode = { kind: 'list' } | { kind: 'new' } | { kind: 'edit'; s: Statement } | { kind: 'pay'; s: Statement } | { kind: 'upload' };
+type Mode = { kind: 'list' } | { kind: 'new' } | { kind: 'edit'; s: Statement } | { kind: 'pay'; s: Statement } | { kind: 'upload'; file: File };
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -129,7 +129,7 @@ export function BillsPage() {
     return (
       <>
         <h1>Upload statement</h1>
-        <UploadStatement onSave={(v, meta) => saveStatement(v, meta)} onDone={() => setMode({ kind: 'list' })} />
+        <UploadStatement initialFile={mode.file} onSave={(v, meta) => saveStatement(v, meta)} onDone={() => setMode({ kind: 'list' })} />
       </>
     );
   }
@@ -161,7 +161,20 @@ export function BillsPage() {
         </p>
       ) : (
         <p>
-          <button type="button" onClick={() => setMode({ kind: 'upload' })}>Upload statement</button>{' '}
+          {/* The control itself is the file picker, so one tap opens Files on iPhone (Safari only allows this on a real tap). */}
+          <label className="file-button">
+            Upload statement
+            <input
+              type="file"
+              accept=".pdf,application/pdf"
+              className="visually-hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = ''; // so choosing the same file again still triggers a change
+                if (f) setMode({ kind: 'upload', file: f });
+              }}
+            />
+          </label>{' '}
           <button type="button" className="primary" onClick={() => setMode({ kind: 'new' })}>Add manually</button>
         </p>
       )}

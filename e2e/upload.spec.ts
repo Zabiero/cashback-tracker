@@ -20,8 +20,7 @@ test('upload a password-protected PDF and reach the review form', async ({ page 
   await page.getByRole('button', { name: 'Add card', exact: true }).click();
   await page.getByRole('button', { name: /^Add \S/ }).first().click();
   await page.getByRole('link', { name: 'Bills' }).click();
-  await page.getByRole('button', { name: 'Upload statement' }).click();
-  await page.getByLabel('Statement PDF').setInputFiles({ name: 'statement.pdf', mimeType: 'application/pdf', buffer });
+  await page.getByLabel('Upload statement').setInputFiles({ name: 'statement.pdf', mimeType: 'application/pdf', buffer });
 
   await page.getByLabel('PDF password').fill('wrong');
   await page.getByRole('button', { name: 'Open' }).click();

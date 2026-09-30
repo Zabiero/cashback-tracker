@@ -27,9 +27,9 @@ const good = {
   ],
 };
 
-async function upload() {
-  await userEvent.click(screen.getByRole('button', { name: 'Upload statement' }));
-  await userEvent.upload(screen.getByLabelText('Statement PDF'), file());
+// One tap: the Bills "Upload statement" control is itself the file picker (iPhone: opens Files).
+async function upload(f: File = file()) {
+  await userEvent.upload(screen.getByLabelText('Upload statement'), f);
 }
 
 describe('Upload statement', () => {
@@ -78,7 +78,7 @@ describe('Upload statement', () => {
     await userEvent.click(screen.getByLabelText('Remember for this card on this device'));
     await userEvent.click(screen.getByRole('button', { name: 'Open' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Save statement' }));
-    await screen.findByRole('button', { name: 'Upload statement' });
+    await screen.findByRole('heading', { name: 'Bills' });
     expect(await screen.findByRole('button', { name: 'Forget saved PDF password' })).toBeInTheDocument();
     expect(screen.getByLabelText('Last 4 digits')).toHaveValue('3333');
     await userEvent.type(screen.getByLabelText('Statement day (1–28)'), '8');
@@ -147,12 +147,23 @@ describe('Upload statement', () => {
     expect(screen.queryByText(/4000/)).not.toBeInTheDocument();
   });
 
-  it('cancels from the file-pick step', async () => {
+  it('opens the PDF picker straight from Bills and stays on Bills until a file is chosen', async () => {
     await renderWithData(<BillsPage />, { seed });
-    await userEvent.click(screen.getByRole('button', { name: 'Upload statement' }));
+    const picker = screen.getByLabelText('Upload statement');
+    expect(picker).toHaveAttribute('type', 'file');
+    expect(picker.getAttribute('accept')).toContain('application/pdf');
+    expect(screen.getByRole('heading', { name: 'Bills' })).toBeInTheDocument();
+    expect(mockRead).not.toHaveBeenCalled();
+  });
+
+  it('cancels from the file-pick step reached via "Choose another file"', async () => {
+    mockRead.mockResolvedValue({ ok: false, reason: 'notPdf' });
+    await renderWithData(<BillsPage />, { seed });
+    await upload();
+    await userEvent.click(await screen.findByRole('button', { name: 'Choose another file' }));
+    expect(screen.getByLabelText('Statement PDF')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(await screen.findByRole('heading', { name: 'Bills' })).toBeInTheDocument();
-    expect(mockRead).not.toHaveBeenCalled();
   });
 
   it('cancels from the password step', async () => {
@@ -234,8 +245,7 @@ describe('Upload statement — reader errors', () => {
     await renderWithData(<BillsPage />, { seed });
     const broken = file();
     broken.arrayBuffer = () => Promise.reject(new Error('NotReadableError'));
-    await userEvent.click(screen.getByRole('button', { name: 'Upload statement' }));
-    await userEvent.upload(screen.getByLabelText('Statement PDF'), broken);
+    await upload(broken);
     expect(await screen.findByText('Something went wrong reading this file.')).toBeInTheDocument();
     expect(mockRead).not.toHaveBeenCalled();
   });

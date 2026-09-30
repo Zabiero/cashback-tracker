@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import type { UserCard } from '../../engine/types';
 import { useAppData } from '../../app/DataProvider';
 import { activeCards } from '../../app/selectors';
@@ -22,6 +22,8 @@ type Step =
 interface Props {
   onSave(v: StatementInput, meta: SaveMeta): Promise<boolean>;
   onDone(): void;
+  /** A PDF already picked on the Bills screen; reading starts immediately. */
+  initialFile?: File;
 }
 
 function noteFor(outcome: OkOutcome, candidate: StatementCandidate): string {
@@ -34,10 +36,10 @@ function noteFor(outcome: OkOutcome, candidate: StatementCandidate): string {
   return "Couldn't read this statement — please fill in.";
 }
 
-export function UploadStatement({ onSave, onDone }: Props) {
+export function UploadStatement({ onSave, onDone, initialFile }: Props) {
   const data = useAppData();
   const cards = activeCards(data);
-  const [step, setStep] = useState<Step>({ kind: 'pick' });
+  const [step, setStep] = useState<Step>(initialFile ? { kind: 'reading' } : { kind: 'pick' });
   const [bytes, setBytes] = useState<Uint8Array | null>(null);
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -76,7 +78,18 @@ export function UploadStatement({ onSave, onDone }: Props) {
 
   async function onFileChange(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
-    if (!f) return;
+    if (f) await readFile(f);
+  }
+
+  // Read the file picked on the Bills screen once (the ref guards React StrictMode's double effect).
+  const startedRef = useRef(false);
+  useEffect(() => {
+    if (!initialFile || startedRef.current) return;
+    startedRef.current = true;
+    void readFile(initialFile); // runs once for the file passed in
+  }, [initialFile]);
+
+  async function readFile(f: File) {
     let b: Uint8Array;
     try {
       b = new Uint8Array(await f.arrayBuffer());
