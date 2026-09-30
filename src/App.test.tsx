@@ -8,3 +8,19 @@ it('renders navigation for every screen', async () => {
     expect(screen.getByRole('link', { name })).toBeInTheDocument();
   }
 });
+
+it('has a More link and keeps the Dashboard link name', async () => {
+  await renderWithData(<Layout />);
+  expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('href', '/more');
+  expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveClass('active');
+});
+
+it('highlights More while on a screen that lives under More', async () => {
+  await renderWithData(<Layout />, { route: '/cards' });
+  expect(screen.getByRole('link', { name: 'More' })).toHaveClass('active');
+});
+
+it('opens the More page at /more', async () => {
+  await renderWithData(<Layout />, { route: '/more' });
+  expect(screen.getByRole('heading', { level: 1, name: 'More' })).toBeInTheDocument();
+});
