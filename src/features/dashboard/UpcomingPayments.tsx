@@ -3,6 +3,7 @@ import { useAppData } from '../../app/DataProvider';
 import { nameOf } from '../../app/selectors';
 import { statementStatus, upcomingPayments } from '../../statements/logic';
 import { formatRM } from '../../lib/money';
+import { Money } from '../../components/Money';
 
 export function UpcomingPayments() {
   const data = useAppData();
@@ -11,13 +12,19 @@ export function UpcomingPayments() {
   return (
     <section className="panel" aria-label="Upcoming payments">
       <h2>Upcoming payments</h2>
-      <ul>
+      <ul className="rows">
         {items.map((s) => {
           const st = statementStatus(s, data.today);
           return (
             <li key={s.id}>
-              <Link to="/bills">{nameOf(data, s.userCardId)}</Link> — <span className={`chip chip-${st.tone}`}>{st.label}</span> —{' '}
-              {formatRM(s.statementBalance)} (min {formatRM(s.minimumDue)})
+              <div className="row-main">
+                <Link to="/bills" className="row-title">{nameOf(data, s.userCardId)}</Link>
+                <span><span className={`chip chip-${st.tone}`}>{st.label}</span></span>
+              </div>
+              <div className="row-end">
+                <Money value={s.statementBalance} size="lg" />
+                <span className="muted">min {formatRM(s.minimumDue)}</span>
+              </div>
             </li>
           );
         })}

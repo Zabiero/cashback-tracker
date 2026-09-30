@@ -57,10 +57,14 @@ describe('DashboardPage', () => {
     });
     const panel = screen.getByRole('region', { name: 'Upcoming payments' });
     const items = within(panel).getAllByRole('listitem');
-    expect(items.map((i) => i.textContent)).toEqual([
-      'Card A — Overdue by 3 days — RM100.00 (min RM10.00)',
-      'Card A — Due in 4 days — RM200.00 (min RM20.00)',
-    ]);
+    expect(items).toHaveLength(2);
+    expect(within(items[0]).getByRole('link', { name: 'Card A' })).toHaveAttribute('href', '/bills');
+    expect(within(items[0]).getByText('Overdue by 3 days')).toBeInTheDocument();
+    expect(within(items[0]).getByText('RM100.00')).toBeInTheDocument();
+    expect(within(items[0]).getByText('min RM10.00')).toBeInTheDocument();
+    expect(within(items[1]).getByText('Due in 4 days')).toBeInTheDocument();
+    expect(within(items[1]).getByText('RM200.00')).toBeInTheDocument();
+    expect(within(items[1]).getByText('min RM20.00')).toBeInTheDocument();
   });
 
   it('hides the panel when nothing is due soon', async () => {

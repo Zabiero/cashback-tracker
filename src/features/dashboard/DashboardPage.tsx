@@ -7,6 +7,8 @@ import { formatRate } from '../../engine/format';
 import { CATEGORY_LABELS } from '../../lib/labels';
 import { formatRM } from '../../lib/money';
 import { UpcomingPayments } from './UpcomingPayments';
+import { PageHeader } from '../../components/PageHeader';
+import { Money } from '../../components/Money';
 
 export function DashboardPage() {
   const data = useAppData();
@@ -17,8 +19,7 @@ export function DashboardPage() {
 
   return (
     <>
-      <h1>Dashboard</h1>
-      <UpcomingPayments />
+      <PageHeader title="Dashboard" />
       {errors.length > 0 && (
         <div className="panel error" role="alert">
           {errors.map(([id, msg]) => (
@@ -30,59 +31,69 @@ export function DashboardPage() {
       )}
 
       {rows.length === 0 ? (
-        <p>
+        <p className="panel">
           <Link to="/cards">Add your first card</Link> to start tracking cashback.
         </p>
       ) : (
-        <>
-          <section className="panel">
-            <div className="muted">Earned this period (all cards)</div>
-            <div data-testid="period-total" style={{ fontSize: 32, fontWeight: 700 }}>
-              {formatRM(total)}
-            </div>
-            <p className="muted">Estimates only — check your bank statement</p>
-          </section>
-
-          {rows.map(({ userCard, card, name, earnings }) => (
-            <section key={userCard.id} className="panel" aria-label={name}>
-              <h2>
-                {name}
-                {needsStatementDay(userCard, card) && (
-                  <>
-                    {' '}
-                    <Link to="/cards" className="badge warn">
-                      Set your statement day
-                    </Link>
-                  </>
-                )}
-              </h2>
-              <div className="muted">
-                {earnings.period.start} – {earnings.period.end} · spent {formatRM(earnings.totalSpend)} · earned {formatRM(earnings.totalEarnedRM)}
-              </div>
-              {earnings.caps.map((c) => (
-                <CapMeter key={c.key} label={c.label} usedRM={c.usedRM} limitRM={c.limitRM} />
-              ))}
-              {earnings.locked && <p className="banner">Spend {formatRM(earnings.locked.spendNeeded)} more this period to unlock rewards</p>}
-              {earnings.nextTier && (
-                <p>
-                  Spend {formatRM(earnings.nextTier.spendNeeded)} more on {name} to reach {formatRate(earnings.nextTier.nextRate, card.rewardType)}
-                </p>
-              )}
-            </section>
-          ))}
-        </>
+        <section className="panel hero">
+          <div className="muted">Earned this period (all cards)</div>
+          <div data-testid="period-total" className="amount amount-hero">
+            {formatRM(total)}
+          </div>
+          <p className="muted">Estimates only — check your bank statement</p>
+        </section>
       )}
 
+      <UpcomingPayments />
+
+      {rows.map(({ userCard, card, name, earnings }) => (
+        <section key={userCard.id} className="panel" aria-label={name}>
+          <div className="card-head">
+            <h2>
+              {name}
+              {needsStatementDay(userCard, card) && (
+                <>
+                  {' '}
+                  <Link to="/cards" className="badge warn">
+                    Set your statement day
+                  </Link>
+                </>
+              )}
+            </h2>
+          </div>
+          <div className="muted">
+            {earnings.period.start} – {earnings.period.end} · spent {formatRM(earnings.totalSpend)} · earned {formatRM(earnings.totalEarnedRM)}
+          </div>
+          {earnings.caps.map((c) => (
+            <CapMeter key={c.key} label={c.label} usedRM={c.usedRM} limitRM={c.limitRM} />
+          ))}
+          {earnings.locked && <p className="tip">Spend {formatRM(earnings.locked.spendNeeded)} more this period to unlock rewards</p>}
+          {earnings.nextTier && (
+            <p className="tip">
+              Spend {formatRM(earnings.nextTier.spendNeeded)} more on {name} to reach {formatRate(earnings.nextTier.nextRate, card.rewardType)}
+            </p>
+          )}
+        </section>
+      ))}
+
       <section className="panel">
-        <h2>Recent transactions</h2>
-        <ul data-testid="recent">
+        <div className="card-head">
+          <h2>Recent transactions</h2>
+          <Link to="/transactions">All transactions</Link>
+        </div>
+        <ul data-testid="recent" className="rows">
           {recent.map((t) => (
             <li key={t.id}>
-              {t.date} · {nameOf(data, t.userCardId)} · {t.merchant ?? CATEGORY_LABELS[t.category]} · {formatRM(t.amount)}
+              <div className="row-main">
+                <span className="row-title">{t.merchant ?? CATEGORY_LABELS[t.category]}</span>
+                <span className="muted">
+                  {t.date} · {nameOf(data, t.userCardId)}
+                </span>
+              </div>
+              <Money value={t.amount} />
             </li>
           ))}
         </ul>
-        <Link to="/transactions">All transactions</Link>
       </section>
     </>
   );
