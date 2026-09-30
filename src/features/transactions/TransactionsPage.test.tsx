@@ -16,6 +16,8 @@ describe('TransactionsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
     expect(await screen.findByText('RM1,234.00')).toBeInTheDocument();
     expect(screen.getByText('RM61.70')).toBeInTheDocument();
+    // Phones hide the column headers, so the cashback cell carries its own label.
+    expect(screen.getByText('RM61.70')).toHaveAttribute('data-label', 'Cashback');
     expect((await repo.listTransactions())[0]).toMatchObject({ amount: 1234, category: 'dining', date: '2026-09-24' });
   });
 

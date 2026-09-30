@@ -121,7 +121,7 @@ export function TransactionsPage() {
                   <td className="tx-merchant">{t.merchant ?? ''}{t.overseas ? ' · Overseas' : ''}</td>
                   <td className="tx-category">{CATEGORY_LABELS[t.category]}</td>
                   <td className="tx-amount num">{formatRM(t.amount)}</td>
-                  <td className="tx-cashback num">{formatRM(earned.get(t.id) ?? 0)}</td>
+                  <td className="tx-cashback num" data-label="Cashback">{formatRM(earned.get(t.id) ?? 0)}</td>
                   <td className="tx-actions num">
                     <button type="button" className="link" onClick={() => setEditing(t)}>Edit</button>
                     <button type="button" className="link danger" onClick={() => remove(t)}>Delete</button>

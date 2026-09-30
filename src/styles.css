@@ -1,5 +1,5 @@
 :root {
-  --bg: #f4f5f7; --surface: #fff; --surface-2: #f8f9fa; --text: #111827; --muted: #6b7280; --border: #e5e7eb;
+  --bg: #f4f5f7; --surface: #fff; --surface-2: #f8f9fa; --text: #111827; --muted: #5f6673; --border: #e5e7eb;
   --accent: #0f766e; --accent-strong: #0d625b; --accent-soft: #e6f4f2;
   --warn: #b45309; --warn-soft: #fef3c7; --danger: #b91c1c; --danger-soft: #fee2e2; --ok: #166534; --ok-soft: #dcfce7;
   --radius: 16px; --radius-sm: 10px;
@@ -23,16 +23,17 @@ ul, ol { margin: 0 0 var(--s2); padding-left: 20px; }
 
 /* ---------- Shell: desktop sidebar, phone bottom tab bar ---------- */
 .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
-.nav { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: var(--s1); padding: var(--s5) var(--s3); background: var(--surface); border-right: 1px solid var(--border); }
+.nav { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: var(--s1); padding: var(--s5) var(--s3) var(--s5) max(var(--s3), env(safe-area-inset-left)); background: var(--surface); border-right: 1px solid var(--border); }
 .brand { font-size: 18px; font-weight: 700; color: var(--accent); padding: 0 var(--s3) var(--s4); }
 .nav a { display: flex; align-items: center; gap: var(--s3); padding: 10px var(--s3); border-radius: var(--radius-sm); color: var(--text); text-decoration: none; white-space: nowrap; font-weight: 500; }
 .nav a:hover { background: var(--surface-2); }
 .nav a.active { background: var(--accent-soft); color: var(--accent); }
 .nav .label-short, .nav .more-link { display: none; }
-.main { width: 100%; max-width: 960px; margin: 0 auto; padding: var(--s6); }
+/* Landscape iPhones get this layout; viewport-fit=cover means we must keep clear of the notch ourselves. */
+.main { width: 100%; max-width: 960px; margin: 0 auto; padding: var(--s6) max(var(--s6), env(safe-area-inset-right)) var(--s6) var(--s6); }
 @media (max-width: 700px) {
   .shell { grid-template-columns: minmax(0, 1fr); }
-  .nav { position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; z-index: 10; flex-direction: row; gap: 0; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid var(--border); }
+  .nav { position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; z-index: 10; flex-direction: row; gap: 0; padding: 6px max(4px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); border-right: 0; border-top: 1px solid var(--border); }
   .brand, .nav .label-long, .nav a.desktop-only { display: none; }
   .nav .label-short { display: inline; }
   .nav .more-link { display: flex; }
@@ -65,7 +66,7 @@ ul, ol { margin: 0 0 var(--s2); padding-left: 20px; }
 .filters label { flex: 1 1 160px; }
 label { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
 label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display: flex; align-items: center; gap: var(--s2); font-size: 15px; font-weight: 400; color: var(--text); }
-label.inline { display: inline-grid; margin-right: var(--s3); }
+label.inline, label.inline:has(> input[type="checkbox"]), label.inline:has(> input[type="radio"]) { display: inline-flex; align-items: center; gap: 6px; margin-right: var(--s3); }
 input, select, textarea { font: inherit; font-size: 16px; color: var(--text); min-height: var(--tap); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); }
 input, select { min-width: 0; max-width: 100%; }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); background: var(--surface); }
@@ -154,6 +155,7 @@ th.num, td.num { text-align: right; }
   .tx-date, .tx-card, .tx-category { order: 3; font-size: 13px; color: var(--muted); }
   .tx-card::before, .tx-category::before { content: "· "; }
   .tx-cashback { order: 4; margin-left: auto; font-size: 13px; color: var(--accent); }
+  .tx-cashback::before { content: attr(data-label) " "; color: var(--muted); }
   .tx-actions { order: 5; flex-basis: 100%; }
   /* No merchant: the category takes the title spot. */
   .tx-merchant:empty { display: none; }
