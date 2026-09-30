@@ -88,8 +88,9 @@ export function CardsPage() {
                 <p className="muted">
                   Current period: {current?.start} – {current?.end}
                 </p>
-                {card.periodType === 'statement' && <StatementDayForm key={`${uc.id}-${uc.cycleDay ?? ''}`} userCard={uc} onSave={save} />}
-                <Last4Form key={`${uc.id}-${uc.last4 ?? ''}`} userCard={uc} onSave={save} />
+                {/* Keys must differ between the two forms: remounting on save refreshes their inputs. */}
+                {card.periodType === 'statement' && <StatementDayForm key={`day-${uc.id}-${uc.cycleDay ?? ''}`} userCard={uc} onSave={save} />}
+                <Last4Form key={`last4-${uc.id}-${uc.last4 ?? ''}`} userCard={uc} onSave={save} />
                 {uc.pdfPassword && (
                   <button type="button" onClick={() => save({ ...uc, pdfPassword: undefined })}>
                     Forget saved PDF password

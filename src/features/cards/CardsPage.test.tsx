@@ -95,6 +95,26 @@ describe('CardsPage', () => {
     expect(screen.getByLabelText('Last 4 digits')).toHaveValue('');
   });
 
+  it('shows one statement-day form after saving the day, then saves a new day', async () => {
+    // Regression: the statement-day and last-4 forms once shared a React key when both were
+    // empty, which left a stale duplicate statement-day form on screen after saving.
+    const { repo } = await renderWithData(<CardsPage />, {
+      seed: (r) => seedCard(r, { periodType: 'statement', defaultCycleDay: 1 }).then(() => undefined),
+    });
+    await userEvent.type(screen.getByRole('textbox', { name: 'Statement day (1–28)' }), '15');
+    await userEvent.click(screen.getByRole('button', { name: 'Save statement day' }));
+    await waitFor(async () => expect((await repo.listUserCards())[0].cycleDay).toBe(15));
+    expect(await screen.findAllByRole('button', { name: 'Save statement day' })).toHaveLength(1);
+    expect(screen.getAllByRole('textbox', { name: 'Statement day (1–28)' })).toHaveLength(1);
+
+    const day = screen.getByRole('textbox', { name: 'Statement day (1–28)' });
+    await userEvent.clear(day);
+    await userEvent.type(day, '20');
+    await userEvent.click(screen.getByRole('button', { name: 'Save statement day' }));
+    await waitFor(async () => expect((await repo.listUserCards())[0].cycleDay).toBe(20));
+    expect(screen.getAllByRole('button', { name: 'Save statement day' })).toHaveLength(1);
+  });
+
   it('forgets a saved PDF password', async () => {
     const { repo } = await renderWithData(<CardsPage />, {
       seed: async (r) => {
@@ -103,8 +123,9 @@ describe('CardsPage', () => {
       },
     });
     await userEvent.click(screen.getByRole('button', { name: 'Forget saved PDF password' }));
+    // The button disappears only after the save and refresh finish, so wait for that first.
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Forget saved PDF password' })).not.toBeInTheDocument());
     expect((await repo.listUserCards())[0].pdfPassword).toBeUndefined();
-    expect(screen.queryByRole('button', { name: 'Forget saved PDF password' })).not.toBeInTheDocument();
   });
 
   describe('rule editor overrides on catalog cards', () => {
