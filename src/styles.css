@@ -47,7 +47,7 @@ ul, ol { margin: 0 0 var(--s2); padding-left: 20px; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
 
 /* ---------- Cards (panels) ---------- */
-.panel { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin: 0 0 var(--s4); overflow-wrap: anywhere; }
+.panel { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin: 0 0 var(--s4); overflow-wrap: anywhere; overflow: hidden; /* WebKit counts long <select> text as page width */ }
 .panel > :last-child { margin-bottom: 0; }
 @media (max-width: 700px) { .panel { padding: var(--s4); } }
 .card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s3); margin-bottom: var(--s2); }
@@ -63,10 +63,11 @@ ul, ol { margin: 0 0 var(--s2); padding-left: 20px; }
 @media (max-width: 700px) { .form-grid { grid-template-columns: minmax(0, 1fr); } }
 .filters { display: flex; flex-wrap: wrap; gap: var(--s3); }
 .filters label { flex: 1 1 160px; }
-label { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+label { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
 label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display: flex; align-items: center; gap: var(--s2); font-size: 15px; font-weight: 400; color: var(--text); }
 label.inline { display: inline-grid; margin-right: var(--s3); }
 input, select, textarea { font: inherit; font-size: 16px; color: var(--text); min-height: var(--tap); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); }
+input, select { min-width: 0; max-width: 100%; }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); background: var(--surface); }
 input[type="checkbox"], input[type="radio"] { width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0; accent-color: var(--accent); }
 input[type="file"] { min-height: 0; padding: 0; border: 0; background: none; font-size: 14px; }
@@ -99,7 +100,8 @@ button.link.danger:hover { background: var(--danger-soft); }
 
 /* ---------- Cap meters ---------- */
 .cap { margin: var(--s3) 0; }
-.cap-label { display: flex; justify-content: space-between; gap: var(--s2); font-size: 13px; color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.cap-label { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s3); font-size: 13px; color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.cap-label > span:last-child { flex: none; white-space: nowrap; }
 .cap-track { height: 10px; background: #eceef1; border-radius: 999px; overflow: hidden; }
 .cap-fill { height: 100%; background: var(--accent); border-radius: 999px; }
 .cap-warn .cap-fill { background: var(--warn); }
@@ -153,6 +155,10 @@ th.num, td.num { text-align: right; }
   .tx-card::before, .tx-category::before { content: "· "; }
   .tx-cashback { order: 4; margin-left: auto; font-size: 13px; color: var(--accent); }
   .tx-actions { order: 5; flex-basis: 100%; }
+  /* No merchant: the category takes the title spot. */
+  .tx-merchant:empty { display: none; }
+  .tx-merchant:empty ~ .tx-category { order: 1; flex: 1 1 calc(100% - 130px); font-weight: 600; font-size: 15px; color: var(--text); }
+  .tx-merchant:empty ~ .tx-category::before { content: none; }
 }
 
 /* ---------- Misc ---------- */
