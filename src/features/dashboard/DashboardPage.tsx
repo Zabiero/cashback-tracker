@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useAppData } from '../../app/DataProvider';
-import { currentEarnings, nameOf, needsStatementDay } from '../../app/selectors';
-import { CapMeter } from '../../components/CapMeter';
+import { currentEarnings, nameOf, needsStatementDay, txnsFor } from '../../app/selectors';
+import { SpendMeter } from '../../components/SpendMeter';
+import { spendTargets } from '../../engine/spendTargets';
 import { round2 } from '../../engine/earnings';
 import { formatRate } from '../../engine/format';
 import { CATEGORY_LABELS } from '../../lib/labels';
@@ -64,8 +65,8 @@ export function DashboardPage() {
           <div className="muted">
             {earnings.period.start} – {earnings.period.end} · spent {formatRM(earnings.totalSpend)} · earned {formatRM(earnings.totalEarnedRM)}
           </div>
-          {earnings.caps.map((c) => (
-            <CapMeter key={c.key} label={c.label} usedRM={c.usedRM} limitRM={c.limitRM} />
+          {spendTargets(card, txnsFor(data.transactions, userCard.id), earnings).map((t) => (
+            <SpendMeter key={t.key} t={t} />
           ))}
           {earnings.locked && <p className="tip">Spend {formatRM(earnings.locked.spendNeeded)} more this period to unlock rewards</p>}
           {earnings.nextTier && (
