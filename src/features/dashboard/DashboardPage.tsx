@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAppData } from '../../app/DataProvider';
 import { currentEarnings, nameOf, needsStatementDay, txnsFor } from '../../app/selectors';
 import { SpendMeter } from '../../components/SpendMeter';
-import { spendTargets } from '../../engine/spendTargets';
+import { spendPlan } from '../../engine/spendTargets';
 import { round2 } from '../../engine/earnings';
 import { formatRate } from '../../engine/format';
 import { CATEGORY_LABELS } from '../../lib/labels';
@@ -47,35 +47,41 @@ export function DashboardPage() {
 
       <UpcomingPayments />
 
-      {rows.map(({ userCard, card, name, earnings }) => (
-        <section key={userCard.id} className="panel" aria-label={name}>
-          <div className="card-head">
-            <h2>
-              {name}
-              {needsStatementDay(userCard, card) && (
-                <>
-                  {' '}
-                  <Link to="/cards" className="badge warn">
-                    Set your statement day
-                  </Link>
-                </>
-              )}
-            </h2>
-          </div>
-          <div className="muted">
-            {earnings.period.start} – {earnings.period.end} · spent {formatRM(earnings.totalSpend)} · earned {formatRM(earnings.totalEarnedRM)}
-          </div>
-          {spendTargets(card, txnsFor(data.transactions, userCard.id), earnings).map((t) => (
-            <SpendMeter key={t.key} t={t} />
-          ))}
-          {earnings.locked && <p className="tip">Spend {formatRM(earnings.locked.spendNeeded)} more this period to unlock rewards</p>}
-          {earnings.nextTier && (
-            <p className="tip">
-              Spend {formatRM(earnings.nextTier.spendNeeded)} more on {name} to reach {formatRate(earnings.nextTier.nextRate, card.rewardType)}
-            </p>
-          )}
-        </section>
-      ))}
+      {rows.map(({ userCard, card, name, earnings }) => {
+        const plan = spendPlan(card, txnsFor(data.transactions, userCard.id), earnings);
+        return (
+          <section key={userCard.id} className="panel" aria-label={name}>
+            <div className="card-head">
+              <h2>
+                {name}
+                {needsStatementDay(userCard, card) && (
+                  <>
+                    {' '}
+                    <Link to="/cards" className="badge warn">
+                      Set your statement day
+                    </Link>
+                  </>
+                )}
+              </h2>
+            </div>
+            <div className="muted">
+              {earnings.period.start} – {earnings.period.end} · spent {formatRM(earnings.totalSpend)} · earned {formatRM(earnings.totalEarnedRM)}
+            </div>
+            {plan.rows.length > 0 && (
+              <p className="spend-total">{plan.moreToMax > 0 ? `Spend ${formatRM(plan.moreToMax)} more to max this card` : 'This card is maxed out ✓'}</p>
+            )}
+            {plan.rows.map((t) => (
+              <SpendMeter key={t.key} t={t} />
+            ))}
+            {earnings.locked && <p className="tip">Spend {formatRM(earnings.locked.spendNeeded)} more this period to unlock rewards</p>}
+            {earnings.nextTier && (
+              <p className="tip">
+                Spend {formatRM(earnings.nextTier.spendNeeded)} more on {name} to reach {formatRate(earnings.nextTier.nextRate, card.rewardType)}
+              </p>
+            )}
+          </section>
+        );
+      })}
 
       <section className="panel">
         <div className="card-head">

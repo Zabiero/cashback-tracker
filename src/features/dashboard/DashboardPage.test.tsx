@@ -20,8 +20,9 @@ describe('DashboardPage', () => {
     });
     expect(screen.getByTestId('period-total')).toHaveTextContent('RM26.20'); // 25 + 1.20
     expect(screen.getByRole('progressbar', { name: 'Dining spend' })).toHaveAttribute('aria-valuenow', '500');
-    expect(screen.getByText('RM500.00 / RM600.00')).toBeInTheDocument();
-    expect(screen.getByText('Spend RM100.00 more to max out · cashback RM25.00 of RM30.00')).toBeInTheDocument();
+    expect(screen.getByText('RM100.00 more')).toBeInTheDocument();
+    expect(screen.getByText('RM500.00 of RM600.00 · cashback RM25.00 of RM30.00')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Card A' })).getByText('Spend RM100.00 more to max this card')).toBeInTheDocument();
     expect(screen.getByText('Spend RM400.00 more on Card B to reach 5%')).toBeInTheDocument();
     expect(screen.getByTestId('recent')).toHaveTextContent('Nando');
     expect(screen.getByText('Estimates only — check your bank statement')).toBeInTheDocument();

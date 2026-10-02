@@ -104,6 +104,8 @@ button.link.danger:hover { background: var(--danger-soft); }
 .cap-label { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s3); font-size: 13px; color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
 .cap-label > span:last-child { flex: none; white-space: nowrap; }
 .cap-track { height: 10px; background: #eceef1; border-radius: 999px; overflow: hidden; }
+.cap-more { color: var(--text); font-weight: 600; }
+.spend-total { font-weight: 600; color: var(--accent); margin: var(--s2) 0 var(--s1); }
 .cap-note { margin-top: 6px; font-size: 12px; }
 .cap-fill { height: 100%; background: var(--accent); border-radius: 999px; }
 .cap-warn .cap-fill { background: var(--warn); }
