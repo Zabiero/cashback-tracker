@@ -10,6 +10,7 @@ test('add a card, log spend, see it on the dashboard', async ({ page }) => {
   await page.goto('/');
   await addFirstCatalogCard(page);
   await page.getByRole('link', { name: 'Transactions' }).click();
+  await page.getByRole('button', { name: 'Add transaction' }).click();
   await page.getByLabel('Amount (RM)').fill('100');
   await page.getByRole('button', { name: 'Petrol' }).click();
   await page.getByRole('button', { name: 'Save transaction' }).click();

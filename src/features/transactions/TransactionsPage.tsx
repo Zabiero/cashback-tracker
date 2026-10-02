@@ -8,16 +8,23 @@ import { formatRM } from '../../lib/money';
 import { newId } from '../../lib/id';
 import { TransactionForm } from './TransactionForm';
 import { PageHeader } from '../../components/PageHeader';
+import { Icon } from '../../components/Icon';
 
 export function TransactionsPage() {
   const data = useAppData();
   const { repo, transactions, templates, resolved, refresh, today } = data;
   const cards = activeCards(data);
   const earned = useMemo(() => earningsByTransaction(data), [data]);
-  const [month, setMonth] = useState(today.slice(0, 7));
+  const [month, setMonth] = useState(''); // '' = all months
   const [cardFilter, setCardFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [editing, setEditing] = useState<Transaction | null>(null);
+  const [adding, setAdding] = useState(false);
+  const formOpen = adding || editing !== null;
+  const closeForm = () => {
+    setAdding(false);
+    setEditing(null);
+  };
 
   const rows = transactions
     .filter((t) => (!month || t.date.startsWith(month)) && (!cardFilter || t.userCardId === cardFilter) && (!categoryFilter || t.category === categoryFilter))
@@ -43,7 +50,7 @@ export function TransactionsPage() {
       toSave = { ...tx, recurringId: tpl.id };
     }
     await repo.saveTransaction(toSave);
-    setEditing(null);
+    closeForm();
     await refresh();
   }
 
@@ -63,22 +70,37 @@ export function TransactionsPage() {
 
   return (
     <>
-      <PageHeader title="Transactions" />
-      <TransactionForm
-        key={editing?.id ?? 'new'}
-        cards={cards}
-        transactions={transactions}
-        today={today}
-        initial={editing ?? undefined}
-        onSubmit={submit}
-        onCancel={editing ? () => setEditing(null) : undefined}
+      <PageHeader
+        title="Transactions"
+        actions={!formOpen && (
+          <button type="button" className="primary" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={18} />
+            Add transaction
+          </button>
+        )}
       />
+      {formOpen && (
+        <TransactionForm
+          key={editing?.id ?? 'new'}
+          cards={cards}
+          transactions={transactions}
+          today={today}
+          initial={editing ?? undefined}
+          onSubmit={submit}
+          onCancel={closeForm}
+        />
+      )}
 
       <section className="panel filters" aria-label="Filters">
         <label>
           Month
           <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} />
         </label>
+        {month && (
+          <button type="button" className="link" onClick={() => setMonth('')}>
+            Show all months
+          </button>
+        )}
         <label>
           Card
           <select value={cardFilter} onChange={(e) => setCardFilter(e.target.value)}>
