@@ -28,6 +28,25 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Estimates only — check your bank statement')).toBeInTheDocument();
   });
 
+  it('shows spending this period by category, largest first, across all cards', async () => {
+    await renderWithData(<DashboardPage />, {
+      seed: async (repo) => {
+        await seedCard(repo, {}, 'A', 'Card A');
+        await seedCard(repo, {}, 'B', 'Card B');
+        await repo.saveTransactions([
+          { id: 'x', userCardId: 'A', date: '2026-09-10', amount: 80, category: 'dining', paymentMethod: 'physical', createdAt: 'a' },
+          { id: 'y', userCardId: 'B', date: '2026-09-11', amount: 200, category: 'petrol', paymentMethod: 'physical', createdAt: 'b' },
+          { id: 'z', userCardId: 'B', date: '2026-09-12', amount: 40, category: 'dining', paymentMethod: 'physical', createdAt: 'c' },
+          { id: 'old', userCardId: 'A', date: '2026-08-20', amount: 999, category: 'dining', paymentMethod: 'physical', createdAt: 'd' },
+        ]);
+      },
+    });
+    const panel = screen.getByRole('region', { name: 'Spending this period' });
+    expect(within(panel).getByRole('heading', { name: 'Spending this period' }).parentElement).toHaveTextContent('RM320.00');
+    const items = within(panel).getAllByRole('listitem');
+    expect(items.map((li) => li.textContent)).toEqual(['PetrolRM200.00', 'DiningRM120.00']);
+  });
+
   it('shows broken cards without hiding the rest', async () => {
     await renderWithData(<DashboardPage />, {
       seed: async (repo) => {

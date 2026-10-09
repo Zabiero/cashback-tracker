@@ -80,13 +80,15 @@ export function ReportsPage() {
           </select>
         </label>
         <ul aria-label="By category" className="rows">
-          {(Object.entries(selected.byCategory) as [Category, number][])
+          {(Object.entries(selected.spendByCategory) as [Category, number][])
             .sort((a, b) => b[1] - a[1])
-            .map(([c, v]) => (
+            .map(([c, spent]) => (
               <li key={c}>
-                <span>
-                  {CATEGORY_LABELS[c]}: {formatRM(v)}
-                </span>
+                <div className="row-main">
+                  <span className="row-title">{CATEGORY_LABELS[c]}</span>
+                  <span className="muted">cashback {formatRM(selected.byCategory[c] ?? 0)}</span>
+                </div>
+                <span className="amount">{formatRM(spent)}</span>
               </li>
             ))}
         </ul>

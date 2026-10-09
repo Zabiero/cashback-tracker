@@ -24,8 +24,14 @@ describe('ReportsPage', () => {
     expect(sep).toHaveTextContent('RM200.00');
     expect(sep).toHaveTextContent('RM10.00');
     expect(sep).toHaveTextContent('5.00%');
-    expect(screen.getByRole('list', { name: 'By category' })).toHaveTextContent('Petrol: RM10.00');
+    const petrol = within(screen.getByRole('list', { name: 'By category' })).getByRole('listitem');
+    expect(petrol).toHaveTextContent('Petrol');
+    expect(petrol).toHaveTextContent('cashback RM10.00');
+    expect(petrol).toHaveTextContent('RM200.00');
     await userEvent.selectOptions(screen.getByLabelText('Breakdown month'), '2026-08');
-    expect(screen.getByRole('list', { name: 'By category' })).toHaveTextContent('Dining: RM5.00');
+    const dining = within(screen.getByRole('list', { name: 'By category' })).getByRole('listitem');
+    expect(dining).toHaveTextContent('Dining');
+    expect(dining).toHaveTextContent('cashback RM5.00');
+    expect(dining).toHaveTextContent('RM100.00');
   });
 });

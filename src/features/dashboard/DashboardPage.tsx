@@ -4,6 +4,8 @@ import { currentEarnings, nameOf, needsStatementDay, txnsFor } from '../../app/s
 import { SpendMeter } from '../../components/SpendMeter';
 import { spendPlan } from '../../engine/spendTargets';
 import { round2 } from '../../engine/earnings';
+import { inPeriod } from '../../engine/periods';
+import { spendByCategory } from '../../engine/report';
 import { formatRate } from '../../engine/format';
 import { CATEGORY_LABELS } from '../../lib/labels';
 import { formatRM } from '../../lib/money';
@@ -17,6 +19,9 @@ export function DashboardPage() {
   const total = round2(rows.reduce((s, r) => s + r.earnings.totalEarnedRM, 0));
   const recent = [...data.transactions].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
   const errors = Object.entries(data.cardErrors);
+  const periodTxs = rows.flatMap(({ userCard, earnings }) => txnsFor(data.transactions, userCard.id).filter((t) => inPeriod(t.date, earnings.period)));
+  const spending = spendByCategory(periodTxs);
+  const totalSpend = round2(rows.reduce((s, r) => s + r.earnings.totalSpend, 0));
 
   return (
     <>
@@ -42,6 +47,23 @@ export function DashboardPage() {
             {formatRM(total)}
           </div>
           <p className="muted">Estimates only — check your bank statement</p>
+        </section>
+      )}
+
+      {spending.length > 0 && (
+        <section className="panel" aria-label="Spending this period">
+          <div className="card-head">
+            <h2>Spending this period</h2>
+            <span className="amount">{formatRM(totalSpend)}</span>
+          </div>
+          <ul className="rows">
+            {spending.map(([c, spent]) => (
+              <li key={c}>
+                <span className="row-title">{CATEGORY_LABELS[c]}</span>
+                <span className="amount">{formatRM(spent)}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
