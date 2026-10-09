@@ -28,7 +28,7 @@ describe('monthlyReport', () => {
       { userCard: uc('A'), card: at5, transactions: [tx({ userCardId: 'A', amount: 100, category: 'dining', date: '2026-09-02' })] },
       { userCard: uc('B'), card: at5, transactions: [tx({ userCardId: 'B', amount: 200, category: 'petrol', date: '2026-09-03' })] },
     ]);
-    expect(rows).toEqual([{ month: '2026-09', spend: 300, earnedRM: 15, byCard: { A: 5, B: 10 }, byCategory: { dining: 5, petrol: 10 }, spendByCategory: { dining: 100, petrol: 200 } }]);
+    expect(rows).toEqual([{ month: '2026-09', spend: 300, earnedRM: 15, byCard: { A: 5, B: 10 }, spendByCard: { A: 100, B: 200 }, byCategory: { dining: 5, petrol: 10 }, spendByCategory: { dining: 100, petrol: 200 } }]);
     expect(effectiveRate(rows[0])).toBeCloseTo(0.05);
   });
   it('nets refunds out of category spend', () => {

@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DashboardPage } from './DashboardPage';
 import { renderWithData, seedCard } from '../../test/renderWithData';
 import { statement } from '../../test/fixtures';
@@ -41,10 +42,14 @@ describe('DashboardPage', () => {
         ]);
       },
     });
-    const panel = screen.getByRole('region', { name: 'Spending this period' });
-    expect(within(panel).getByRole('heading', { name: 'Spending this period' }).parentElement).toHaveTextContent('RM320.00');
+    const panel = screen.getByRole('group', { name: 'Spending this period' });
+    expect(panel).not.toHaveAttribute('open');
+    expect(panel.querySelector('summary')).toHaveTextContent('Spending this periodRM320.00');
+    await userEvent.click(within(panel).getByText('Spending this period'));
+    expect(panel).toHaveAttribute('open');
     const items = within(panel).getAllByRole('listitem');
-    expect(items.map((li) => li.textContent)).toEqual(['PetrolRM200.00', 'DiningRM120.00']);
+    expect(items.map((li) => li.textContent)).toEqual(['PetrolCard B RM200.00RM200.00', 'DiningCard A RM80.00 · Card B RM40.00RM120.00']);
+    expect(panel).toHaveTextContent('Periods: Card A 2026-09-01 – 2026-09-30 · Card B 2026-09-01 – 2026-09-30');
   });
 
   it('shows broken cards without hiding the rest', async () => {

@@ -20,7 +20,8 @@ export interface MonthRow {
   month: string; // YYYY-MM of the period's end date
   spend: number;
   earnedRM: number;
-  byCard: Record<string, number>;
+  byCard: Record<string, number>; // cashback RM
+  spendByCard: Record<string, number>; // RM spent
   byCategory: Partial<Record<Category, number>>; // cashback RM
   spendByCategory: Partial<Record<Category, number>>; // RM spent, net of refunds
 }
@@ -38,10 +39,11 @@ export function monthlyReport(inputs: CardInput[]): MonthRow[] {
     const byId = new Map(transactions.map((t) => [t.id, t]));
     for (const pe of allPeriodEarnings(card, transactions)) {
       const month = pe.period.end.slice(0, 7);
-      const row = rows.get(month) ?? { month, spend: 0, earnedRM: 0, byCard: {}, byCategory: {}, spendByCategory: {} };
+      const row = rows.get(month) ?? { month, spend: 0, earnedRM: 0, byCard: {}, spendByCard: {}, byCategory: {}, spendByCategory: {} };
       row.spend = round2(row.spend + pe.totalSpend);
       row.earnedRM = round2(row.earnedRM + pe.totalEarnedRM);
       row.byCard[userCard.id] = round2((row.byCard[userCard.id] ?? 0) + pe.totalEarnedRM);
+      row.spendByCard[userCard.id] = round2((row.spendByCard[userCard.id] ?? 0) + pe.totalSpend);
       for (const e of pe.perTransaction) {
         const t = byId.get(e.transactionId)!;
         row.byCategory[t.category] = round2((row.byCategory[t.category] ?? 0) + e.earnedRM);

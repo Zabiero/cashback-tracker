@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAppData } from '../../app/DataProvider';
 import { cardInputs, nameOf } from '../../app/selectors';
 import { effectiveRate, monthlyReport } from '../../engine/report';
@@ -8,7 +7,7 @@ import { CATEGORY_LABELS } from '../../lib/labels';
 import { formatRM } from '../../lib/money';
 import { PageHeader } from '../../components/PageHeader';
 
-const PALETTE = ['#0f766e', '#2563eb', '#d97706', '#9333ea', '#dc2626', '#0891b2', '#65a30d', '#db2777'];
+const pct = (n: number) => `${(n * 100).toFixed(2)}%`;
 
 export function ReportsPage() {
   const data = useAppData();
@@ -25,60 +24,65 @@ export function ReportsPage() {
     );
   }
 
-  const month = picked ?? rows[rows.length - 1].month;
+  const thisMonth = data.today.slice(0, 7);
+  const month = picked ?? (rows.some((r) => r.month === thisMonth) ? thisMonth : rows[rows.length - 1].month);
   const selected = rows.find((r) => r.month === month) ?? rows[rows.length - 1];
-  const chartData = rows.slice(-12).map((r) => ({ month: r.month, ...r.byCard }));
-  const cardIds = inputs.map((i) => i.userCard.id);
+  const cards = Object.entries(selected.spendByCard)
+    .map(([id, spent]) => {
+      const earned = selected.byCard[id] ?? 0;
+      return { id, name: nameOf(data, id), spent, earned, rate: spent > 0 ? earned / spent : 0 };
+    })
+    .sort((a, b) => b.rate - a.rate || b.spent - a.spent);
+  const topRate = Math.max(0, ...cards.map((c) => c.rate));
 
   return (
     <>
       <PageHeader title="Reports" />
-      <section className="panel" aria-label="Cashback by month chart">
-        <ResponsiveContainer width="100%" height={280} initialDimension={{ width: 400, height: 280 }}>
-          <BarChart data={chartData}>
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(v) => formatRM(Number(v))} />
-            <Legend />
-            {cardIds.map((id, i) => (
-              <Bar key={id} dataKey={id} name={nameOf(data, id)} stackId="cards" fill={PALETTE[i % PALETTE.length]} />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </section>
-
-      <div className="table-wrap">
-      <table aria-label="Monthly cashback">
-        <thead>
-          <tr>
-            <th>Month</th><th className="num">Spend</th><th className="num">Cashback</th><th className="num">Effective rate</th>
-          </tr>
-        </thead>
-        <tbody>
-          {[...rows].reverse().map((r) => (
-            <tr key={r.month}>
-              <td>{r.month}</td>
-              <td className="num">{formatRM(r.spend)}</td>
-              <td className="num">{formatRM(r.earnedRM)}</td>
-              <td className="num">{(effectiveRate(r) * 100).toFixed(2)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
-      <p className="muted">Months follow each card's period end date. Estimates only — check your bank statement</p>
-
       <section className="panel">
         <label>
-          Breakdown month
+          Month
           <select value={month} onChange={(e) => setPicked(e.target.value)}>
-            {rows.map((r) => (
+            {[...rows].reverse().map((r) => (
               <option key={r.month} value={r.month}>
                 {r.month}
               </option>
             ))}
           </select>
         </label>
+        <p className="muted">
+          Spent {formatRM(selected.spend)} · cashback {formatRM(selected.earnedRM)} · {pct(effectiveRate(selected))} back
+        </p>
+      </section>
+
+      <section className="panel" aria-label="Cashback for spending by card">
+        <h2>Cashback for spending, by card</h2>
+        <p className="muted">Bar = cashback ÷ spending. Longest bar gives back the most per RM spent.</p>
+        {cards.map((c) => (
+          <div key={c.id} className="cap">
+            <div className="cap-label">
+              <span className="cap-more">{c.name}</span>
+              <span className="cap-more">{pct(c.rate)}</span>
+            </div>
+            <div
+              role="meter"
+              aria-label={`${c.name} cashback rate`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Number((c.rate * 100).toFixed(2))}
+              title={`${formatRM(c.earned)} cashback on ${formatRM(c.spent)} spent`}
+              className="cap-track"
+            >
+              <div className="cap-fill" style={{ width: `${topRate > 0 ? (c.rate / topRate) * 100 : 0}%` }} />
+            </div>
+            <div className="muted cap-note">
+              {formatRM(c.earned)} cashback on {formatRM(c.spent)} spent
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="panel">
+        <h2>By category</h2>
         <ul aria-label="By category" className="rows">
           {(Object.entries(selected.spendByCategory) as [Category, number][])
             .sort((a, b) => b[1] - a[1])
@@ -93,6 +97,27 @@ export function ReportsPage() {
             ))}
         </ul>
       </section>
+
+      <div className="table-wrap">
+        <table aria-label="Monthly cashback">
+          <thead>
+            <tr>
+              <th>Month</th><th className="num">Spend</th><th className="num">Cashback</th><th className="num">Effective rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...rows].reverse().map((r) => (
+              <tr key={r.month}>
+                <td>{r.month}</td>
+                <td className="num">{formatRM(r.spend)}</td>
+                <td className="num">{formatRM(r.earnedRM)}</td>
+                <td className="num">{pct(effectiveRate(r))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="muted">Months follow each card's period end date. Estimates only — check your bank statement</p>
     </>
   );
 }

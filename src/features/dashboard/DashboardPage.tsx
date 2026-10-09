@@ -6,6 +6,7 @@ import { spendPlan } from '../../engine/spendTargets';
 import { round2 } from '../../engine/earnings';
 import { inPeriod } from '../../engine/periods';
 import { spendByCategory } from '../../engine/report';
+import type { Category } from '../../engine/types';
 import { formatRate } from '../../engine/format';
 import { CATEGORY_LABELS } from '../../lib/labels';
 import { formatRM } from '../../lib/money';
@@ -21,6 +22,11 @@ export function DashboardPage() {
   const errors = Object.entries(data.cardErrors);
   const periodTxs = rows.flatMap(({ userCard, earnings }) => txnsFor(data.transactions, userCard.id).filter((t) => inPeriod(t.date, earnings.period)));
   const spending = spendByCategory(periodTxs);
+  const cardSplit = (c: Category) =>
+    rows
+      .map(({ userCard, name }) => ({ name, spent: round2(periodTxs.reduce((s, t) => (t.userCardId === userCard.id && t.category === c ? s + t.amount : s), 0)) }))
+      .filter((x) => x.spent !== 0)
+      .sort((a, b) => b.spent - a.spent);
   const totalSpend = round2(rows.reduce((s, r) => s + r.earnings.totalSpend, 0));
 
   return (
@@ -51,20 +57,26 @@ export function DashboardPage() {
       )}
 
       {spending.length > 0 && (
-        <section className="panel" aria-label="Spending this period">
-          <div className="card-head">
-            <h2>Spending this period</h2>
+        <details className="panel spending" aria-label="Spending this period">
+          <summary>
+            <span className="spending-title">Spending this period</span>
             <span className="amount">{formatRM(totalSpend)}</span>
-          </div>
+          </summary>
           <ul className="rows">
             {spending.map(([c, spent]) => (
               <li key={c}>
-                <span className="row-title">{CATEGORY_LABELS[c]}</span>
+                <div className="row-main">
+                  <span className="row-title">{CATEGORY_LABELS[c]}</span>
+                  <span className="muted">{cardSplit(c).map((x) => `${x.name} ${formatRM(x.spent)}`).join(' · ')}</span>
+                </div>
                 <span className="amount">{formatRM(spent)}</span>
               </li>
             ))}
           </ul>
-        </section>
+          <p className="muted">
+            Periods: {rows.map(({ name, earnings }) => `${name} ${earnings.period.start} – ${earnings.period.end}`).join(' · ')}
+          </p>
+        </details>
       )}
 
       <UpcomingPayments />

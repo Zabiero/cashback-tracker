@@ -172,4 +172,12 @@ th.num, td.num { text-align: right; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
 details summary { cursor: pointer; color: var(--accent); font-weight: 500; margin: var(--s3) 0; }
+details.spending > summary { display: flex; align-items: center; gap: var(--s2); margin: 0; min-height: var(--tap, 40px); color: var(--text); }
+details.spending > summary .spending-title { font-weight: 600; font-size: 17px; }
+details.spending > summary .amount { margin-left: auto; }
+details.spending > summary::after { content: "▾"; color: var(--muted); transition: transform 0.15s; }
+details.spending[open] > summary::after { transform: rotate(180deg); }
+details.spending > summary::-webkit-details-marker { display: none; }
+details.spending { list-style: none; }
+details.spending > summary { list-style: none; }
 pre { white-space: pre-wrap; font-size: 12px; background: var(--surface-2); padding: var(--s3); border-radius: var(--radius-sm); max-height: 320px; overflow: auto; }
