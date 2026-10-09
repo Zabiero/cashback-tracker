@@ -33,10 +33,26 @@ const HYPOTHETICAL_ID = '__purchase__';
 // U+FFFF sorts after every real createdAt, so the hypothetical purchase is applied last within its day.
 const LAST_IN_DAY = '\uFFFF';
 
+/** The card as if this period's spend reaches its top tier and every spending minimum; caps still apply. */
+export function atBestTier(card: CardProduct): CardProduct {
+  return {
+    ...card,
+    minMonthlySpendToEarn: undefined,
+    rules: card.rules.map((r) => ({
+      ...r,
+      rate: r.tiers?.length ? Math.max(...r.tiers.map((t) => t.rate)) : r.rate,
+      tiers: undefined,
+      minCategorySpend: undefined,
+    })),
+  };
+}
+
+/** Ranks cards for a purchase, assuming each card reaches its top tier this period. */
 export function recommend(inputs: CardInput[], purchase: Purchase): Recommendation[] {
   return inputs
     .filter((i) => !i.userCard.archived)
-    .map(({ userCard, card, transactions }) => {
+    .map(({ userCard, card: product, transactions }) => {
+      const card = atBestTier(product);
       const period = getPeriod(card, purchase.date);
       const hypo: Transaction = { ...purchase, id: HYPOTHETICAL_ID, userCardId: userCard.id, createdAt: LAST_IN_DAY };
       const before = calculateEarnings(card, transactions, period);
@@ -48,9 +64,7 @@ export function recommend(inputs: CardInput[], purchase: Purchase): Recommendati
       const capUtilisation = Math.max(0, ...after.caps.map((c) => (c.limitRM > 0 ? c.usedRM / c.limitRM : 1)));
 
       let reason: string;
-      if (after.locked) {
-        reason = `Spend ${formatRM(after.locked.spendNeeded)} more this period to unlock rewards`;
-      } else if (!rule) {
+      if (!rule) {
         reason = 'No reward for this purchase';
       } else if (incrementalRM === 0) {
         reason = `Cap reached — earns ${formatRM(0)}`;

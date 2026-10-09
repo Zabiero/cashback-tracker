@@ -120,7 +120,7 @@ export function WhichCardPage() {
           })}
         </ol>
       )}
-      <p className="muted">Estimates only — check your bank statement</p>
+      <p className="muted">Assumes each card reaches its top tier and spending minimums this period. Estimates only — check your bank statement</p>
     </>
   );
 }

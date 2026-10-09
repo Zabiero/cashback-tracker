@@ -29,21 +29,23 @@ describe('recommend', () => {
     const r = recommend([dine5(600)], dining(100));
     expect(r[0]).toMatchObject({ incrementalRM: 0, reason: 'Cap reached — earns RM0.00' });
   });
-  it('counts a tier crossing retroactively', () => {
+  it('assumes the top tier even before the period spend reaches it', () => {
     const tiered: CardInput = {
       userCard: uc('T'),
-      card: card({ rules: [{ id: 't', label: 'Tiered', rate: 0, tiers: [{ minPeriodSpend: 0, rate: 0.002 }, { minPeriodSpend: 1000, rate: 0.05 }] }] }),
-      transactions: [tx({ userCardId: 'T', amount: 900, date: '2026-09-02' })],
+      card: card({ rules: [{ id: 't', label: 'Tiered', rate: 0, tiers: [{ minPeriodSpend: 0, rate: 0.002 }, { minPeriodSpend: 3000, rate: 0.12 }], capPerPeriod: 30 }] }),
+      transactions: [tx({ userCardId: 'T', amount: 100, date: '2026-09-02' })],
     };
-    expect(recommend([tiered], dining(200))[0].incrementalRM).toBe(53.2);
+    const r = recommend([tiered, flat1], dining(100));
+    expect(r[0]).toMatchObject({ userCardId: 'T', incrementalRM: 12, rate: 0.12 });
+    expect(r[0].reason).toBe('12% Tiered — RM6.00 cap left');
   });
-  it('explains a minimum-spend lock', () => {
+  it('assumes the card minimum spend is met', () => {
     const lockedCard: CardInput = {
       userCard: uc('L'),
       card: card({ minMonthlySpendToEarn: 500, rules: [{ id: 'all', label: 'All', rate: 0.05 }] }),
       transactions: [tx({ userCardId: 'L', amount: 100, date: '2026-09-02' })],
     };
-    expect(recommend([lockedCard], dining(100))[0].reason).toBe('Spend RM300.00 more this period to unlock rewards');
+    expect(recommend([lockedCard], dining(100))[0]).toMatchObject({ incrementalRM: 5, reason: '5% All' });
   });
   it('explains when no rule matches', () => {
     const petrolOnly: CardInput = { userCard: uc('P'), card: card({ rules: [{ id: 'p', label: 'Petrol', rate: 0.05, categories: ['petrol'] }] }), transactions: [] };
@@ -57,7 +59,7 @@ describe('recommend', () => {
     expect(recommend([lastMonth], dining(100))[0].incrementalRM).toBe(5);
   });
 
-  it('unlocks a minCategorySpend rule once the purchase pushes the category over the threshold', () => {
+  it('assumes a category minimum spend is met', () => {
     const input: CardInput = {
       userCard: uc('G'),
       card: card({
@@ -70,7 +72,7 @@ describe('recommend', () => {
     };
     const purchase: Purchase = { amount: 100, category: 'groceries', paymentMethod: 'physical', date: '2026-09-24' };
     const r = recommend([input], purchase)[0];
-    expect(r.incrementalRM).toBe(14.6);
+    expect(r.incrementalRM).toBe(5);
     expect(r.ruleLabel).toBe('Groceries');
     expect(r.rate).toBe(0.05);
     expect(r.reason.startsWith('5% Groceries')).toBe(true);
