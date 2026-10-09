@@ -10,6 +10,8 @@ export interface CatalogScenario {
 }
 
 const MAYBANK_TNC = 'https://www.maybank2u.com.my/iwov-resources/pdf/personal/cards/credit_cards/tc-amex-ikhwan-cashback.pdf';
+const MAYBANK_2_TNC = 'https://www.maybank2u.com.my/iwov-resources/pdf/personal/cards/credit_cards/GRCC-CashBack-TnC.pdf';
+const MAYBANK_2_PAGE = 'https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/cards/credit/maybank_2_gold_card.page';
 const RHB_TNC = 'https://www.rhbgroup.com/-/media/Files/personal/cards/credit-cards/overview/RHB-Shell-Visa-Credit-Card_Terms.pdf';
 const UOB_TNC = 'https://www.uob.com.my/assets/web-resources/personal/pdf/cards/credit-cards/one-card/one-card-tnc-eng.pdf';
 const ALLIANCE_TNC = 'https://www.alliancebank.com.my/Alliance/media/Documents/Cards/Personal/Credit-Cards/Credit-Card-Terms-Conditions-TNC-EN.pdf';
@@ -29,6 +31,32 @@ export const SCENARIOS: CatalogScenario[] = [
     ],
     expectedRM: 50.6, // 40 + min(24, 10 left) = 50 cashback; 200 + 100 TreatsPoints × RM0.002 = 0.60
     source: `${MAYBANK_TNC}: clause 1 (8% online), clause 3a (RM50/month cap), clause 6 (calendar month); TreatsPoints 2x/1x from the maybank2u product page; 500 TreatsPoints = RM1 from https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/cards/treats_rewards/treatspoints-redeem.page`,
+  },
+  {
+    productId: 'maybank-2-gold-amex',
+    description: 'Weekend 5% hits the RM50 cap; weekend petrol earns 1x points; weekday retail earns 5x TreatsPoints',
+    period: { start: '2026-09-01', end: '2026-09-30' },
+    transactions: [
+      { date: '2026-09-05', amount: 600, category: 'dining', paymentMethod: 'physical', merchant: 'Sushi Zanmai' }, // Saturday
+      { date: '2026-09-06', amount: 500, category: 'others', paymentMethod: 'physical', merchant: 'Uniqlo' }, // Sunday
+      { date: '2026-09-06', amount: 100, category: 'petrol', paymentMethod: 'physical', merchant: 'Shell' }, // Sunday
+      { date: '2026-09-08', amount: 200, category: 'groceries', paymentMethod: 'physical', merchant: 'Lotus' }, // Tuesday
+      { date: '2026-09-08', amount: 150, category: 'utilities', paymentMethod: 'online', merchant: 'TNB' }, // Tuesday
+    ],
+    expectedRM: 52.5, // 30 + min(25, 20 left) = 50 cashback; (100 × 1 + 200 × 5 + 150 × 1) TreatsPoints × RM0.002 = 2.50
+    source: `${MAYBANK_2_TNC}: clause 1 (5% Saturday and Sunday), clause 2 (excludes petrol, airlines, government, utilities, e-wallet reloads — Malay version), clause 3 (RM50 per calendar month); 5x weekday / 1x petrol, utilities, insurance TreatsPoints from ${MAYBANK_2_PAGE}`,
+  },
+  {
+    productId: 'maybank-2-gold-visa-mastercard',
+    description: '1x TreatsPoints on retail spend; e-wallet reloads earn nothing',
+    period: { start: '2026-09-01', end: '2026-09-30' },
+    transactions: [
+      { date: '2026-09-05', amount: 300, category: 'groceries', paymentMethod: 'physical', merchant: 'Jaya Grocer' },
+      { date: '2026-09-08', amount: 200, category: 'petrol', paymentMethod: 'physical', merchant: 'Shell' },
+      { date: '2026-09-10', amount: 50, category: 'ewallet', paymentMethod: 'ewallet_reload', merchant: 'Touch n Go' },
+    ],
+    expectedRM: 1.0, // 500 TreatsPoints × RM0.002
+    source: `${MAYBANK_2_PAGE}: "1x TreatsPoint for spend on Maybank 2 Mastercard / Visa Card"; "No TreatsPoints ... E-Wallet reloads"`,
   },
   {
     productId: 'rhb-shell-visa',

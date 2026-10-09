@@ -42,6 +42,60 @@
     "catalogVersion": 1
   },
   {
+    "id": "maybank-2-gold-amex",
+    "bank": "Maybank",
+    "name": "2 Gold American Express Card",
+    "rewardType": "cashback",
+    "periodType": "calendar",
+    "rules": [
+      {
+        "id": "weekend-cashback",
+        "label": "5% cashback on Saturday and Sunday retail spend (cap RM50/month; no cashback on petrol, airlines, government, utilities or e-wallet reloads)",
+        "rate": 0.05,
+        "categories": ["groceries", "dining", "online", "travel", "insurance", "others"],
+        "days": [0, 6],
+        "capPerPeriod": 50
+      },
+      {
+        "id": "weekday-5x",
+        "label": "5x TreatsPoints on weekday retail spend",
+        "rate": 5,
+        "pointValueRM": 0.002,
+        "categories": ["groceries", "dining", "online", "travel", "others"],
+        "days": [1, 2, 3, 4, 5]
+      },
+      {
+        "id": "base-1x",
+        "label": "1x TreatsPoints on petrol, utilities, education and insurance (any day)",
+        "rate": 1,
+        "pointValueRM": 0.002,
+        "categories": ["petrol", "utilities", "insurance"]
+      }
+    ],
+    "sourceUrl": "https://www.maybank2u.com.my/iwov-resources/pdf/personal/cards/credit_cards/GRCC-CashBack-TnC.pdf",
+    "verifiedOn": "2026-10-09",
+    "catalogVersion": 1
+  },
+  {
+    "id": "maybank-2-gold-visa-mastercard",
+    "bank": "Maybank",
+    "name": "2 Gold Visa / Mastercard",
+    "rewardType": "points",
+    "pointValueRM": 0.002,
+    "periodType": "calendar",
+    "rules": [
+      {
+        "id": "base-1x",
+        "label": "1x TreatsPoints on retail spend (none on e-wallet reloads, government, JomPay or FPX)",
+        "rate": 1,
+        "categories": ["petrol", "groceries", "dining", "online", "utilities", "travel", "insurance", "others"]
+      }
+    ],
+    "sourceUrl": "https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/cards/credit/maybank_2_gold_card.page",
+    "verifiedOn": "2026-10-09",
+    "catalogVersion": 1
+  },
+  {
     "id": "rhb-shell-visa",
     "bank": "RHB",
     "name": "Shell Visa Credit Card",

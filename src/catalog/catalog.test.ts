@@ -6,7 +6,7 @@ import { calculateEarnings } from '../engine/earnings';
 import type { Transaction } from '../engine/types';
 
 const EXPECTED_IDS = [
-  'maybank-islamic-ikhwan-amex-platinum', 'rhb-shell-visa', 'uob-one-classic', 'alliance-visa-infinite',
+  'maybank-islamic-ikhwan-amex-platinum', 'maybank-2-gold-amex', 'maybank-2-gold-visa-mastercard', 'rhb-shell-visa', 'uob-one-classic', 'alliance-visa-infinite',
   'alliance-visa-virtual', 'pbb-quantum-visa', 'pbb-quantum-mastercard', 'aeon-amp-visa-platinum',
 ];
 

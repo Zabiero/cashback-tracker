@@ -38,7 +38,7 @@ describe('detectBank', () => {
 
 describe('bankIdForBankName', () => {
   it('maps every catalog product bank', () => {
-    expect(CATALOG).toHaveLength(8);
+    expect(CATALOG).toHaveLength(10);
     for (const p of CATALOG) expect(bankIdForBankName(p.bank)).not.toBeNull();
   });
 
