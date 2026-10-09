@@ -1,6 +1,7 @@
 import { recommend, type CardInput, type Purchase } from './recommend';
 import type { UserCard } from './types';
 import { card, tx } from '../test/fixtures';
+import { getProduct } from '../catalog';
 
 const uc = (id: string, archived = false): UserCard => ({ id, productId: null, nickname: id, catalogVersionSeen: 1, archived });
 const dining = (amount: number): Purchase => ({ amount, category: 'dining', paymentMethod: 'contactless', date: '2026-09-24' });
@@ -57,6 +58,18 @@ describe('recommend', () => {
   it('only counts transactions in the purchase period', () => {
     const lastMonth = { ...dine5(0), transactions: [tx({ userCardId: 'B', amount: 600, category: 'dining', date: '2026-08-20' })] };
     expect(recommend([lastMonth], dining(100))[0].incrementalRM).toBe(5);
+  });
+
+  it.each([
+    ['uob-one-classic', 'petrol', undefined, 10], // 10% at RM800, cap RM10
+    ['uob-one-classic', 'groceries', 'Jaya Grocer', 10],
+    ['rhb-shell-visa', 'petrol', 'Shell', 12], // 12% at RM3,000
+    ['rhb-shell-visa', 'groceries', undefined, 5], // 5% at RM3,000, needs RM250 groceries
+    ['rhb-shell-visa', 'utilities', undefined, 5],
+  ] as const)('uses the top tier for %s %s with no spend yet', (productId, category, merchant, expected) => {
+    const input: CardInput = { userCard: uc('C'), card: getProduct(productId)!, transactions: [] };
+    const purchase: Purchase = { amount: 100, category, merchant, paymentMethod: 'physical', date: '2026-09-24' };
+    expect(recommend([input], purchase)[0].incrementalRM).toBe(expected);
   });
 
   it('assumes a category minimum spend is met', () => {
