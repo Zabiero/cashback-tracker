@@ -85,6 +85,41 @@ describe('spendPlan', () => {
   });
 
   it('has no rows and nothing to spend for a card without caps', () => {
-    expect(plan(card(), [tx({ amount: 100 })])).toEqual({ rows: [], moreToMax: 0 });
+    expect(plan(card(), [tx({ amount: 100 })])).toEqual({ rows: [], moreToMax: 0, topTier: null });
+  });
+
+  describe('topTier', () => {
+    const tiered = card({
+      tierExcludedCategories: ['utilities'],
+      rules: [
+        { id: 'p', label: 'Petrol', rate: 0, categories: ['petrol'], capPerPeriod: 30, tiers },
+        { id: 'o', label: 'Overseas', rate: 0, overseas: true, capPerPeriod: 50, tiers },
+        { id: 'x', label: 'Other', rate: 0.002 },
+      ],
+    });
+
+    it('drops with every spend that counts toward the tier, even spend that fills no cap', () => {
+      const before = plan(tiered, [tx({ id: 'a', amount: 1600, category: 'others' })]);
+      const after = plan(tiered, [tx({ id: 'a', amount: 1600, category: 'others' }), tx({ id: 'b', amount: 100, category: 'dining' })]);
+      expect(before.topTier).toEqual({ spent: 1600, target: 2000, more: 400 });
+      expect(after.topTier).toEqual({ spent: 1700, target: 2000, more: 300 });
+    });
+
+    it('ignores spend in categories excluded from the tier', () => {
+      expect(plan(tiered, [tx({ amount: 500, category: 'utilities' })]).topTier).toEqual({ spent: 0, target: 2000, more: 2000 });
+    });
+
+    it('is reached once tier spend meets the top tier', () => {
+      expect(plan(tiered, [tx({ amount: 2500, category: 'others' })]).topTier).toEqual({ spent: 2500, target: 2000, more: 0 });
+    });
+
+    it('includes the card minimum spend when that is higher than the top tier', () => {
+      const c = { ...tiered, minMonthlySpendToEarn: 2500 };
+      expect(plan(c, []).topTier).toEqual({ spent: 0, target: 2500, more: 2500 });
+    });
+
+    it('is null for a card without tiers or a minimum spend', () => {
+      expect(plan(card({ rules: [dining] }), []).topTier).toBeNull();
+    });
   });
 });

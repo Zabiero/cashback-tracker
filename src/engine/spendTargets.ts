@@ -21,6 +21,14 @@ export interface SpendPlan {
   rows: SpendTarget[];
   /** RM more to spend on the card to max every cap, assuming the best rates (top tier reached). */
   moreToMax: number;
+  /** Progress to the top tier (and any card minimum): every spend that counts toward tiers. Null if the card has neither. */
+  topTier: { spent: number; target: number; more: number } | null;
+}
+
+function topTierProgress(card: CardProduct, tierSpend: number): SpendPlan['topTier'] {
+  const target = Math.max(0, card.minMonthlySpendToEarn ?? 0, ...card.rules.flatMap((r) => r.tiers?.map((t) => t.minPeriodSpend) ?? []));
+  if (target <= 0) return null;
+  return { spent: tierSpend, target, more: round2(Math.max(0, target - tierSpend)) };
 }
 
 function rulesUnder(card: CardProduct, key: string): Rule[] {
@@ -59,14 +67,12 @@ export function spendPlan(card: CardProduct, transactions: Transaction[], earnin
     rows.push({ key: c.key, label: c.label, spent, target, more: maxed ? 0 : round2(Math.max(0, target - spent)), maxed, earnedRM: c.usedRM, capRM: c.limitRM });
   }
 
-  if (rows.length === 0 || rows.every((r) => r.maxed)) return { rows, moreToMax: 0 };
+  const topTier = topTierProgress(card, earnings.tierSpend);
+  if (rows.length === 0 || rows.every((r) => r.maxed)) return { rows, moreToMax: 0, topTier };
   const categories = rows.filter((r) => r.key !== 'total');
   const total = rows.find((r) => r.key === 'total');
   const categorySum = categories.reduce((s, r) => s + r.more, 0);
   // A card total cap smaller than the categories together is reached first.
   const categoryNeed = categories.length ? (total ? Math.min(categorySum, total.more) : categorySum) : total?.more ?? 0;
-  const topTier = Math.max(0, ...card.rules.flatMap((r) => r.tiers?.map((t) => t.minPeriodSpend) ?? []));
-  const tierNeed = topTier - earnings.tierSpend;
-  const minimumNeed = (card.minMonthlySpendToEarn ?? 0) - earnings.tierSpend;
-  return { rows, moreToMax: round2(Math.max(0, categoryNeed, tierNeed, minimumNeed)) };
+  return { rows, moreToMax: round2(Math.max(0, categoryNeed, topTier?.more ?? 0)), topTier };
 }

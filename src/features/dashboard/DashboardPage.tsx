@@ -101,8 +101,29 @@ export function DashboardPage() {
             <div className="muted">
               {earnings.period.start} – {earnings.period.end} · spent {formatRM(earnings.totalSpend)} · earned {formatRM(earnings.totalEarnedRM)}
             </div>
-            {plan.rows.length > 0 && (
-              <p className="spend-total">{plan.moreToMax > 0 ? `Spend ${formatRM(plan.moreToMax)} more to max this card` : 'This card is maxed out ✓'}</p>
+            {plan.topTier ? (
+              <div className="cap">
+                <p className="spend-total">
+                  {plan.topTier.more > 0 ? `Spend ${formatRM(plan.topTier.more)} more to reach the top tier` : 'Top tier reached ✓'}
+                </p>
+                <div
+                  role="progressbar"
+                  aria-label="Top tier spend"
+                  aria-valuemin={0}
+                  aria-valuemax={plan.topTier.target}
+                  aria-valuenow={plan.topTier.spent}
+                  className="cap-track"
+                >
+                  <div className="cap-fill" style={{ width: `${Math.min(100, (plan.topTier.spent / plan.topTier.target) * 100)}%` }} />
+                </div>
+                <div className="muted cap-note">
+                  {formatRM(plan.topTier.spent)} of {formatRM(plan.topTier.target)} counted toward the top tier
+                </div>
+              </div>
+            ) : (
+              plan.rows.length > 0 && (
+                <p className="spend-total">{plan.moreToMax > 0 ? `Spend ${formatRM(plan.moreToMax)} more to max this card` : 'This card is maxed out ✓'}</p>
+              )
             )}
             {plan.rows.map((t) => (
               <SpendMeter key={t.key} t={t} />

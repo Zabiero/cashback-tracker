@@ -25,6 +25,10 @@ describe('DashboardPage', () => {
     expect(screen.getByText('RM500.00 of RM600.00 · cashback RM25.00 of RM30.00')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Card A' })).getByText('Spend RM100.00 more to max this card')).toBeInTheDocument();
     expect(screen.getByText('Spend RM400.00 more on Card B to reach 5%')).toBeInTheDocument();
+    const cardB = screen.getByRole('region', { name: 'Card B' });
+    expect(within(cardB).getByText('Spend RM400.00 more to reach the top tier')).toBeInTheDocument();
+    expect(within(cardB).getByRole('progressbar', { name: 'Top tier spend' })).toHaveAttribute('aria-valuenow', '600');
+    expect(within(cardB).getByText('RM600.00 of RM1,000.00 counted toward the top tier')).toBeInTheDocument();
     expect(screen.getByTestId('recent')).toHaveTextContent('Nando');
     expect(screen.getByText('Estimates only — check your bank statement')).toBeInTheDocument();
   });
